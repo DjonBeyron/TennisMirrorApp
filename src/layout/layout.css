@@ -88,14 +88,48 @@
   }
 }
 
-/* Кнопки поверх экрана, с учётом выреза и скруглений. */
-.hud {
+/*
+ * Режим «камера на весь экран»: камера растягивается поверх, остальное скрыто, но остаётся в DOM —
+ * видео контента не пересоздаётся.
+ */
+.app[data-mode='camera'] .panel-camera {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.app[data-mode='camera'] .divider,
+.app[data-mode='camera'] .panel-content {
+  visibility: hidden;
+}
+
+/* Общие кнопки в правом верхнем углу, с учётом выреза и скруглений. */
+.top-bar {
   position: fixed;
   z-index: 10;
   top: max(8px, env(safe-area-inset-top));
   right: max(8px, env(safe-area-inset-right));
   display: flex;
   gap: 8px;
+}
+
+/* Скрытый HUD: все элементы с классом .hud прячутся, остаётся кнопка «Показать». */
+.app[data-hud='off'] .hud,
+.app[data-hud='off'] .version {
+  display: none;
+}
+
+.icon-btn.hud-restore {
+  position: fixed;
+  z-index: 10;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  display: none;
+  opacity: 0.4;
+}
+
+.app[data-hud='off'] .hud-restore {
+  display: grid;
 }
 
 /* Заглушки панелей до этапов 2–3. */
@@ -111,16 +145,6 @@
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.viewport-info {
-  margin: 0;
-  font:
-    11px/1.5 ui-monospace,
-    monospace;
-  letter-spacing: normal;
-  text-align: center;
-  text-transform: none;
 }
 
 .placeholder a {

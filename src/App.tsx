@@ -8,10 +8,18 @@ import { Version } from './ui/Version';
 import './layout/layout.css';
 
 export function App() {
+  const mode = useUi((s) => s.mode);
+  const hud = useUi((s) => s.hud);
   const split = useUi((s) => s.split);
   const swapped = useUi((s) => s.swapped);
   return (
-    <div className="app" data-swapped={swapped || undefined} style={{ '--split': split } as CSSProperties}>
+    <div
+      className="app"
+      data-mode={mode}
+      data-hud={hud ? undefined : 'off'}
+      data-swapped={swapped || undefined}
+      style={{ '--split': split } as CSSProperties}
+    >
       <CameraPanel />
       <Divider />
       <ContentPanel />
