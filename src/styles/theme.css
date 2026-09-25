@@ -1,0 +1,17 @@
+/* Тёмная тема — единственная. Цвета в компонентах берутся только отсюда. */
+:root {
+  color-scheme: dark;
+
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1a1a1d;
+  --border: #2a2a2f;
+  --text: #e6e6e9;
+  --text-dim: #7c7c84;
+  --accent: #ff7a1a;
+  --hud-bg: rgb(18 18 20 / 72%);
+
+  /* Кнопки: 44 px на телефоне, до 60 px на планшете. */
+  --btn: clamp(44px, 4vmin + 28px, 60px);
+  --divider: 10px;
+}

@@ -1,0 +1,28 @@
+.icon-btn {
+  display: grid;
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--hud-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn:active {
+  background: var(--surface-2);
+}
+
+.icon-btn svg {
+  width: 50%;
+  height: 50%;
+}
+
+/* Иконка «поменять местами»: ⇅ в портрете, ⇄ в альбоме. */
+@media (orientation: landscape) {
+  .rotate-landscape {
+    transform: rotate(90deg);
+  }
+}

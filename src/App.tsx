@@ -1,10 +1,20 @@
-// Этап 0: пустая оболочка. Раскладка камеры и контента появится на этапе 1 (docs/PLAN.md, раздел 6).
+import type { CSSProperties } from 'react';
+import { CameraPanel } from './camera/CameraPanel';
+import { ContentPanel } from './content/ContentPanel';
+import { Divider } from './layout/Divider';
+import { Hud } from './layout/Hud';
+import { useUi } from './store/ui';
+import './layout/layout.css';
+
 export function App() {
+  const split = useUi((s) => s.split);
+  const swapped = useUi((s) => s.swapped);
   return (
-    <main className="stub">
-      <h1>TennisMirror</h1>
-      <p>Этап 0 — каркас проекта.</p>
-      <a href="/probe.html">Проверка камеры</a>
-    </main>
+    <div className="app" data-swapped={swapped || undefined} style={{ '--split': split } as CSSProperties}>
+      <CameraPanel />
+      <Divider />
+      <ContentPanel />
+      <Hud />
+    </div>
   );
 }
