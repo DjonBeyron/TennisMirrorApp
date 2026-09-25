@@ -2,7 +2,8 @@ import { useEffect, useRef, type ChangeEvent } from 'react';
 import { CameraMirror } from '../camera/CameraMirror';
 import { OverlayControls } from '../overlay/OverlayControls';
 import { selectCurrent, selectCurrentVideo, useContent } from '../store/content';
-import { selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
+import { HideButton, HudRestore, SoloButton } from '../layout/Hud';
+import { selectCameraInContent, selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { LayersIcon, MirrorIcon, PlusIcon, TrashIcon } from '../ui/icons';
 import { ContentStage } from './ContentStage';
@@ -10,8 +11,9 @@ import { VideoControls } from './VideoControls';
 import './content.css';
 
 /**
- * Панель эталона: видео и фото с устройства. В режиме «две камеры» под эталоном — второе превью камеры,
- * а эталон накладывается поверх него (включается кнопкой, прозрачность — ползунком).
+ * Вторая часть экрана: эталон (видео и фото с устройства). В режиме «две камеры» под эталоном —
+ * второе превью камеры, а эталон накладывается поверх него (кнопкой, прозрачность — ползунком).
+ * Как и камеру, эту часть можно развернуть на весь экран.
  */
 export function ContentPanel() {
   const loaded = useContent((s) => s.loaded);
@@ -22,8 +24,10 @@ export function ContentPanel() {
   const load = useContent((s) => s.load);
   const add = useContent((s) => s.add);
   const remove = useContent((s) => s.remove);
-  const dual = useUi((s) => s.layout === 'dual' && !s.fullscreen);
+  const dual = useUi(selectCameraInContent);
   const split = useUi((s) => s.layout === 'split');
+  // Когда эта часть одна на экране, кнопки «скрыть» и «показать» нужны здесь: полоса камеры скрыта.
+  const solo = useUi((s) => s.solo === 'content');
   const overlay = useUi((s) => s.overlay);
   const overlayActive = useUi(selectOverlayActive);
   const visible = useUi(selectContentVisible);
@@ -83,13 +87,15 @@ export function ContentPanel() {
             </>
           )}
         </div>
-        {dual && (
-          <div className="tool-group">
+        <div className="tool-group">
+          {dual && (
             <IconButton label="Эталон поверх камеры" aria-pressed={overlay} onClick={toggleOverlay}>
               <LayersIcon />
             </IconButton>
-          </div>
-        )}
+          )}
+          <SoloButton space="content" />
+          {solo && <HideButton />}
+        </div>
       </div>
 
       <div className="panel-bottom hud">
@@ -97,6 +103,7 @@ export function ContentPanel() {
         {visible && video && current && <VideoControls key={current.id} video={video} />}
       </div>
 
+      <HudRestore />
       <input ref={inputRef} type="file" accept="video/*,image/*" multiple hidden onChange={onFiles} />
     </section>
   );

@@ -1,53 +1,66 @@
 /*
- * Режимы экрана (data-mode на .app): split — камера и эталон рядом; dual — камера в обеих половинах;
- * camera — камера на весь экран. data-overlay — эталон поверх камеры (в dual и на весь экран).
- * DOM один и тот же во всех режимах — видео не пересоздаются, режимы меняют только стили.
+ * Экран из двух частей (data-layout на .app): split — камера и эталон рядом; dual — камера в обеих частях.
+ * data-solo — одна часть на весь экран (camera | content), вторая скрыта, но остаётся в DOM: видео не
+ * пересоздаются, камера не перезапускается. data-overlay — эталон поверх камеры (в dual и при solo=camera).
  */
 
 /*
- * На весь экран обе панели лежат друг на друге без собственных слоёв (без z-index и container-type):
- * тогда слои панелей перемешиваются — видео камеры внизу, эталон над ним, кнопки камеры сверху.
+ * Одна часть на весь экран: обе панели лежат друг на друге без собственных слоёв (без z-index и
+ * container-type) — тогда слои панелей перемешиваются: видео камеры внизу, эталон над ним, кнопки сверху.
  */
-.app[data-mode='camera'] .panel {
+.app[data-solo] .panel {
   position: absolute;
   inset: 0;
   container-type: normal;
 }
 
-.app[data-mode='camera'] .divider {
+.app[data-solo] .divider {
   visibility: hidden;
 }
 
-.app[data-mode='camera'] .panel-content {
+/* Только камера: эталон — прозрачным слоем поверх неё (если включено наложение), его кнопки скрыты. */
+.app[data-solo='camera'] .panel-content {
   background: transparent;
 }
 
-.app[data-mode='camera']:not([data-overlay]) .panel-content {
+.app[data-solo='camera']:not([data-overlay]) .panel-content {
   visibility: hidden;
 }
 
-/* Свои кнопки эталона на весь экран не показываем: управление наложением — в панели камеры. */
-.app[data-mode='camera'] .panel-content .hud,
-.app[data-mode='camera'] .content-empty {
+.app[data-solo='camera'] .panel-content .hud,
+.app[data-solo='camera'] .panel-content .hud-restore,
+.app[data-solo='camera'] .content-empty {
   display: none;
 }
 
 /* Эталон над видео камеры и её слоем щипка (z-index 1), но под кнопками (z-index 3). */
-.app[data-mode='camera'] .stage {
+.app[data-solo='camera'] .stage {
   z-index: 2;
 }
 
-/* Наложенный эталон полупрозрачный; прозрачность — ползунком (--overlay-opacity на корне документа). */
-.app[data-overlay]:is([data-mode='camera'], [data-mode='dual']) .stage {
-  opacity: var(--overlay-opacity, 0.5);
-}
-
-/* «Две камеры» без наложения: во второй половине только камера. */
-.app[data-mode='dual']:not([data-overlay]) .stage {
+/* Только вторая часть: камера скрыта (поток продолжает идти — во второй части он может быть нужен). */
+.app[data-solo='content'] .panel-camera {
   visibility: hidden;
 }
 
-/* В панели эталона ползунок прозрачности во всю ширину, как управление видео под ним. */
+/* Наложенный эталон полупрозрачный; прозрачность — ползунком (--overlay-opacity на корне документа). */
+.app[data-overlay][data-solo='camera'] .stage,
+.app[data-overlay][data-layout='dual'] .stage {
+  opacity: var(--overlay-opacity, 0.5);
+}
+
+/* «Две камеры» без наложения: во второй части только камера. */
+.app[data-layout='dual']:not([data-overlay]) .stage {
+  visibility: hidden;
+}
+
+/* Кнопка «показать кнопки» — в той части, что видна: обычно в камере, при solo=content — во второй. */
+.app[data-hud='off']:not([data-solo='content']) .panel-camera .hud-restore,
+.app[data-hud='off'][data-solo='content'] .panel-content .hud-restore {
+  display: grid;
+}
+
+/* Во второй части ползунок прозрачности во всю ширину, как управление видео под ним. */
 .panel-content .overlay-controls {
   align-self: stretch;
 }

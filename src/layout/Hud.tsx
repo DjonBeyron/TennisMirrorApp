@@ -1,51 +1,66 @@
 import { enterFullscreen, exitFullscreen } from '../platform/fullscreen';
-import { useUi } from '../store/ui';
+import { useUi, type Space } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { CollapseIcon, DualIcon, ExpandIcon, EyeIcon, EyeOffIcon, LayersIcon, SwapIcon } from '../ui/icons';
 
-/** Общие кнопки раскладки. Стоят в полосе панели камеры, чтобы при повороте не залезать на эталон. */
+/**
+ * «Только эта часть» / «показать обе». Есть в полосе кнопок каждой части: любую можно развернуть
+ * на весь экран, вторая при этом скрывается, но не пересоздаётся.
+ */
+export function SoloButton({ space }: { space: Space }) {
+  const solo = useUi((s) => s.solo === space);
+  const toggleSolo = useUi((s) => s.toggleSolo);
+
+  function onClick() {
+    if (solo) exitFullscreen();
+    else enterFullscreen();
+    toggleSolo(space);
+  }
+
+  return (
+    <IconButton label={solo ? 'Показать обе части' : 'Только эта часть'} onClick={onClick}>
+      {solo ? <CollapseIcon /> : <ExpandIcon />}
+    </IconButton>
+  );
+}
+
+export function HideButton() {
+  const toggleHud = useUi((s) => s.toggleHud);
+  return (
+    <IconButton label="Скрыть кнопки" onClick={toggleHud}>
+      <EyeOffIcon />
+    </IconButton>
+  );
+}
+
+/** Кнопки раскладки в полосе камеры: поменять местами, две камеры / наложение, эта часть, скрыть. */
 export function GlobalTools() {
-  const fullscreen = useUi((s) => s.fullscreen);
+  const cameraSolo = useUi((s) => s.solo === 'camera');
   const dual = useUi((s) => s.layout === 'dual');
   const overlay = useUi((s) => s.overlay);
   const toggleSwapped = useUi((s) => s.toggleSwapped);
   const toggleDual = useUi((s) => s.toggleDual);
-  const toggleFullscreen = useUi((s) => s.toggleFullscreen);
   const toggleOverlay = useUi((s) => s.toggleOverlay);
-  const toggleHud = useUi((s) => s.toggleHud);
-
-  function onFullscreen() {
-    if (fullscreen) exitFullscreen();
-    else enterFullscreen();
-    toggleFullscreen();
-  }
 
   return (
     <div className="tool-group">
-      {!fullscreen && (
-        <IconButton label="Поменять местами камеру и эталон" onClick={toggleSwapped}>
+      {!cameraSolo && (
+        <IconButton label="Поменять местами части" onClick={toggleSwapped}>
           <SwapIcon className="rotate-landscape" />
         </IconButton>
       )}
-      {!fullscreen && (
+      {!cameraSolo && (
         <IconButton label="Две камеры" aria-pressed={dual} onClick={toggleDual}>
           <DualIcon />
         </IconButton>
       )}
-      {fullscreen && (
+      {cameraSolo && (
         <IconButton label="Эталон поверх камеры" aria-pressed={overlay} onClick={toggleOverlay}>
           <LayersIcon />
         </IconButton>
       )}
-      <IconButton
-        label={fullscreen ? 'Выйти из полноэкранного режима' : 'Камера на весь экран'}
-        onClick={onFullscreen}
-      >
-        {fullscreen ? <CollapseIcon /> : <ExpandIcon />}
-      </IconButton>
-      <IconButton label="Скрыть кнопки" onClick={toggleHud}>
-        <EyeOffIcon />
-      </IconButton>
+      <SoloButton space="camera" />
+      <HideButton />
     </div>
   );
 }

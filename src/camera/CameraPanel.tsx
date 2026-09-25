@@ -19,7 +19,7 @@ export function CameraPanel() {
   useWakeLock(status === 'live');
 
   // Эталон поверх камеры на весь экран — его управление стоит в нижней полосе этой панели.
-  const overlayHere = useUi((s) => s.fullscreen && s.overlay);
+  const overlayHere = useUi((s) => s.solo === 'camera' && s.overlay);
   const overlayControls = overlayHere ? <OverlayControls full /> : null;
 
   // Фронтальная камера в превью зеркальна, как настоящее зеркало. Запись зеркалом не затрагивается.

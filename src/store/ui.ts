@@ -2,10 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { SPLIT_DEFAULT } from '../layout/split';
 
-/** split — камера и эталон рядом; dual — камера в обеих половинах (во второй можно наложить эталон). */
+/** split — камера и эталон рядом; dual — камера в обеих частях (во второй можно наложить эталон). */
 export type Layout = 'split' | 'dual';
-/** Итоговый режим экрана: раскладка или камера на весь экран. */
-export type Mode = Layout | 'camera';
+/** Часть экрана: камера или вторая часть (эталон, а в dual — камера с наложенным эталоном). */
+export type Space = 'camera' | 'content';
 export type Facing = 'user' | 'environment';
 /** contain — кадр целиком с полями; cover — на всю панель с обрезкой краёв. */
 export type Fit = 'contain' | 'cover';
@@ -14,9 +14,9 @@ export const OPACITY_MIN = 0.1;
 
 interface UiState {
   layout: Layout;
-  /** Камера на весь экран поверх раскладки; выход возвращает прежнюю раскладку. */
-  fullscreen: boolean;
-  /** Эталон поверх камеры: на весь экран — поверх неё, в dual — во второй половине. */
+  /** Одна часть на весь экран, вторая скрыта (null — видны обе). Выход возвращает прежнюю раскладку. */
+  solo: Space | null;
+  /** Эталон поверх камеры: при «только камера» — поверх неё, в dual — во второй части. */
   overlay: boolean;
   /** Непрозрачность наложенного эталона, 0.1…1. */
   overlayOpacity: number;
@@ -34,7 +34,8 @@ interface UiState {
   setOverlayOpacity: (opacity: number) => void;
   toggleSwapped: () => void;
   toggleDual: () => void;
-  toggleFullscreen: () => void;
+  /** Показать только эту часть или вернуть обе. */
+  toggleSolo: (space: Space) => void;
   toggleOverlay: () => void;
   toggleHud: () => void;
   toggleFacing: () => void;
@@ -46,7 +47,7 @@ export const useUi = create<UiState>()(
   persist(
     (set) => ({
       layout: 'split',
-      fullscreen: false,
+      solo: null,
       overlay: true,
       overlayOpacity: 0.5,
       hud: true,
@@ -59,7 +60,7 @@ export const useUi = create<UiState>()(
       setOverlayOpacity: (opacity) => set({ overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, opacity)) }),
       toggleSwapped: () => set((s) => ({ swapped: !s.swapped })),
       toggleDual: () => set((s) => ({ layout: s.layout === 'dual' ? 'split' : 'dual' })),
-      toggleFullscreen: () => set((s) => ({ fullscreen: !s.fullscreen })),
+      toggleSolo: (space) => set((s) => ({ solo: s.solo === space ? null : space })),
       toggleOverlay: () => set((s) => ({ overlay: !s.overlay })),
       toggleHud: () => set((s) => ({ hud: !s.hud })),
       toggleFacing: () => set((s) => ({ facing: s.facing === 'user' ? 'environment' : 'user' })),
@@ -82,15 +83,19 @@ export const useUi = create<UiState>()(
   ),
 );
 
-type Ui = Pick<UiState, 'layout' | 'fullscreen' | 'overlay'>;
+type Ui = Pick<UiState, 'layout' | 'solo' | 'overlay'>;
 
-export const selectMode = (s: Ui): Mode => (s.fullscreen ? 'camera' : s.layout);
+/** Под эталоном камера: «только камера» или «две камеры». Тогда эталон виден только наложением. */
+const cameraUnderContent = (s: Ui) => s.solo === 'camera' || s.layout === 'dual';
 
 /** Эталон лежит поверх камеры (и получает прозрачность и жесты выравнивания). */
-export const selectOverlayActive = (s: Ui) => s.overlay && (s.fullscreen || s.layout === 'dual');
+export const selectOverlayActive = (s: Ui) => s.overlay && cameraUnderContent(s);
 
-/** Эталон виден: рядом с камерой всегда, в остальных режимах — только наложением. */
-export const selectContentVisible = (s: Ui) => (s.fullscreen || s.layout === 'dual' ? s.overlay : true);
+/** Эталон виден: в режиме «рядом» всегда, поверх камеры — только если включено наложение. */
+export const selectContentVisible = (s: Ui) => (cameraUnderContent(s) ? s.overlay : true);
+
+/** Вторая часть показывает камеру (режим «две камеры»), если не открыта одна камера на весь экран. */
+export const selectCameraInContent = (s: Ui) => s.layout === 'dual' && s.solo !== 'camera';
 
 // Прозрачность — CSS-переменная на корне документа: слайдер меняет её без перерисовки всего приложения.
 if (typeof document !== 'undefined') {

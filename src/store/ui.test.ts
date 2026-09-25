@@ -1,28 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { selectContentVisible, selectMode, selectOverlayActive } from './ui';
+import { selectCameraInContent, selectContentVisible, selectOverlayActive, type Space } from './ui';
 
-const ui = (layout: 'split' | 'dual', fullscreen: boolean, overlay: boolean) => ({
-  layout,
-  fullscreen,
-  overlay,
-});
+const ui = (layout: 'split' | 'dual', solo: Space | null, overlay: boolean) => ({ layout, solo, overlay });
 
-describe('режимы экрана', () => {
-  it('на весь экран — режим camera, выход возвращает раскладку', () => {
-    expect(selectMode(ui('dual', true, false))).toBe('camera');
-    expect(selectMode(ui('dual', false, false))).toBe('dual');
+describe('части экрана и наложение', () => {
+  it('в режиме «рядом» эталон виден всегда и не накладывается', () => {
+    expect(selectContentVisible(ui('split', null, false))).toBe(true);
+    expect(selectOverlayActive(ui('split', null, true))).toBe(false);
   });
 
-  it('рядом с камерой эталон виден всегда и не накладывается', () => {
-    expect(selectContentVisible(ui('split', false, false))).toBe(true);
-    expect(selectOverlayActive(ui('split', false, true))).toBe(false);
+  it('эталон на весь экран в режиме «рядом» — обычный, без наложения', () => {
+    expect(selectContentVisible(ui('split', 'content', false))).toBe(true);
+    expect(selectOverlayActive(ui('split', 'content', true))).toBe(false);
   });
 
-  it('в dual и на весь экран эталон виден только наложением', () => {
-    expect(selectContentVisible(ui('dual', false, false))).toBe(false);
-    expect(selectContentVisible(ui('dual', false, true))).toBe(true);
-    expect(selectOverlayActive(ui('dual', false, true))).toBe(true);
-    expect(selectContentVisible(ui('split', true, false))).toBe(false);
-    expect(selectOverlayActive(ui('split', true, true))).toBe(true);
+  it('только камера: эталон виден лишь наложением', () => {
+    expect(selectContentVisible(ui('split', 'camera', false))).toBe(false);
+    expect(selectOverlayActive(ui('split', 'camera', true))).toBe(true);
+  });
+
+  it('две камеры: во второй части камера, эталон — наложением', () => {
+    expect(selectCameraInContent(ui('dual', null, false))).toBe(true);
+    expect(selectContentVisible(ui('dual', null, false))).toBe(false);
+    expect(selectOverlayActive(ui('dual', 'content', true))).toBe(true);
+  });
+
+  it('две камеры, но на весь экран первая часть — вторая камера не нужна', () => {
+    expect(selectCameraInContent(ui('dual', 'camera', true))).toBe(false);
   });
 });

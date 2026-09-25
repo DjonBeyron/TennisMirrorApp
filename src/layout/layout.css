@@ -137,8 +137,8 @@
   }
 }
 
-/* На весь экран камера касается всех краёв. Правило ниже ориентационных — перекрывает их. */
-.app[data-mode='camera'] .panel-camera {
+/* Часть на весь экран касается всех краёв. Правило ниже ориентационных — перекрывает их. */
+.app[data-solo] .panel {
   --safe-t: env(safe-area-inset-top);
   --safe-r: env(safe-area-inset-right);
   --safe-b: env(safe-area-inset-bottom);
@@ -212,6 +212,4 @@
   opacity: 0.4;
 }
 
-.app[data-hud='off'] .hud-restore {
-  display: grid;
-}
+/* В какой части показывать «Показать кнопки» — в modes.css (в той, что видна). */
