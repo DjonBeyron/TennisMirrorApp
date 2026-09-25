@@ -37,16 +37,6 @@
   text-align: center;
 }
 
-.text-btn {
-  min-height: 44px;
-  padding: 0 20px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-}
-
 .camera-tools {
   position: absolute;
   z-index: 3;

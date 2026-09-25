@@ -82,3 +82,66 @@ export function FitCoverIcon() {
     </svg>
   );
 }
+
+export function PlayIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M7 4.5v15L19.5 12z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PauseIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Кадр назад: черта и треугольник влево. */
+export function StepBackIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M6 5v14" />
+      <path d="M18 5.5v13L9 12z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Кадр вперёд: треугольник вправо и черта. */
+export function StepForwardIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M18 5v14" />
+      <path d="M6 5.5v13L15 12z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PlusIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+/** Зеркало: ось посередине и два треугольника — контур и его отражение. */
+export function MirrorIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M12 3v18" strokeDasharray="2 3" />
+      <path d="M9 7L3 17h6z" />
+      <path d="M15 7l6 10h-6z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function TrashIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />
+    </svg>
+  );
+}
