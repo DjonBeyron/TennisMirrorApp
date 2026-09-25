@@ -45,14 +45,22 @@
   visibility: hidden;
 }
 
-/* Наложенный эталон полупрозрачный; прозрачность — ползунком (--overlay-opacity на корне документа). */
-.app[data-overlay][data-solo='camera'] .stage,
-.app[data-overlay][data-layout='dual'] .stage {
+/*
+ * Наложенный эталон полупрозрачный; прозрачность — ползунком (--overlay-opacity на корне документа).
+ * В «Разборе» камеры нет — видео второй части ни на что не накладывается и остаётся непрозрачным.
+ */
+.app[data-overlay][data-solo='camera']:not([data-layout='review']) .panel-content .stage,
+.app[data-overlay][data-layout='dual'] .panel-content .stage {
   opacity: var(--overlay-opacity, 0.5);
 }
 
 /* «Две камеры» без наложения: во второй части только камера. */
-.app[data-layout='dual']:not([data-overlay]) .stage {
+.app[data-layout='dual']:not([data-overlay]) .panel-content .stage {
+  visibility: hidden;
+}
+
+/* «Разбор» с одной первой частью: там копия видео, вторая часть скрыта (её видео — главное, оно играет). */
+.app[data-layout='review'][data-solo='camera'] .panel-content {
   visibility: hidden;
 }
 

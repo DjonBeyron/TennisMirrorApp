@@ -4,6 +4,8 @@ import {
   selectContentVisible,
   selectOverlayActive,
   selectOverlayCopy,
+  selectReviewCopy,
+  selectReviewLayer,
   type Layout,
   type Space,
 } from './ui';
@@ -52,5 +54,30 @@ describe('синхрон: эталон рядом и тот же эталон п
   it('одна камера на весь экран — копия не нужна, эталон ложится поверх сам', () => {
     expect(selectOverlayCopy(ui('sync', 'camera', true))).toBe(false);
     expect(selectOverlayActive(ui('sync', 'camera', true))).toBe(true);
+  });
+});
+
+describe('разбор: одно видео в обеих частях, во второй поверх — слой', () => {
+  it('обе части: копия видео вместо камеры, слой во второй, видео не полупрозрачное', () => {
+    expect(selectReviewCopy(ui('review', null, true))).toBe(true);
+    expect(selectReviewLayer(ui('review', null, true))).toBe(true);
+    expect(selectOverlayActive(ui('review', null, true))).toBe(false);
+    expect(selectContentVisible(ui('review', null, false))).toBe(true);
+  });
+
+  it('одна первая часть: только копия видео, главное видео не на паузе', () => {
+    expect(selectReviewCopy(ui('review', 'camera', true))).toBe(true);
+    expect(selectReviewLayer(ui('review', 'camera', true))).toBe(false);
+    expect(selectContentVisible(ui('review', 'camera', true))).toBe(true);
+    expect(selectOverlayActive(ui('review', 'camera', true))).toBe(false);
+  });
+
+  it('одна вторая часть: видео со слоем, копия не нужна', () => {
+    expect(selectReviewCopy(ui('review', 'content', true))).toBe(false);
+    expect(selectReviewLayer(ui('review', 'content', true))).toBe(true);
+  });
+
+  it('слой выключен кнопкой', () => {
+    expect(selectReviewLayer(ui('review', null, false))).toBe(false);
   });
 });

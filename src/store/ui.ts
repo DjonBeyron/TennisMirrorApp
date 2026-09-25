@@ -4,9 +4,10 @@ import { SPLIT_DEFAULT } from '../layout/split';
 
 /**
  * split — камера и эталон рядом; dual — камера в обеих частях (во второй можно наложить эталон);
- * sync — камера с эталоном поверх и тот же эталон рядом, пауза и перемотка у них общие.
+ * sync — камера с эталоном поверх и тот же эталон рядом, пауза и перемотка у них общие;
+ * review — разбор без камеры: одно видео в обеих частях на общем таймлайне, во второй поверх — слой.
  */
-export type Layout = 'split' | 'dual' | 'sync';
+export type Layout = 'split' | 'dual' | 'sync' | 'review';
 /** Часть экрана: камера или вторая часть (эталон, а в dual — камера с наложенным эталоном). */
 export type Space = 'camera' | 'content';
 export type Facing = 'user' | 'environment';
@@ -35,6 +36,8 @@ interface UiState {
   cameraFit: Fit;
   /** Зеркалить эталон: удобно левше смотреть технику правши. */
   mirrorContent: boolean;
+  /** Зеркалить слой поверх видео в «Разборе» — отдельно от самого видео (эталон левши на записи правши). */
+  mirrorLayer: boolean;
   captureMode: CaptureMode;
   setSplit: (split: number) => void;
   setOverlayOpacity: (opacity: number) => void;
@@ -47,6 +50,7 @@ interface UiState {
   toggleFacing: () => void;
   toggleCameraFit: () => void;
   toggleMirrorContent: () => void;
+  toggleMirrorLayer: () => void;
   setCaptureMode: (mode: CaptureMode) => void;
 }
 
@@ -63,6 +67,7 @@ export const useUi = create<UiState>()(
       facing: 'user',
       cameraFit: 'contain',
       mirrorContent: false,
+      mirrorLayer: false,
       captureMode: 'video',
       setSplit: (split) => set({ split }),
       setOverlayOpacity: (opacity) => set({ overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, opacity)) }),
@@ -74,6 +79,7 @@ export const useUi = create<UiState>()(
       toggleFacing: () => set((s) => ({ facing: s.facing === 'user' ? 'environment' : 'user' })),
       toggleCameraFit: () => set((s) => ({ cameraFit: s.cameraFit === 'contain' ? 'cover' : 'contain' })),
       toggleMirrorContent: () => set((s) => ({ mirrorContent: !s.mirrorContent })),
+      toggleMirrorLayer: () => set((s) => ({ mirrorLayer: !s.mirrorLayer })),
       setCaptureMode: (captureMode) => set({ captureMode }),
     }),
     {
@@ -87,6 +93,7 @@ export const useUi = create<UiState>()(
         facing: s.facing,
         cameraFit: s.cameraFit,
         mirrorContent: s.mirrorContent,
+        mirrorLayer: s.mirrorLayer,
         captureMode: s.captureMode,
       }),
     },
@@ -95,8 +102,11 @@ export const useUi = create<UiState>()(
 
 type Ui = Pick<UiState, 'layout' | 'solo' | 'overlay'>;
 
-/** Под эталоном камера: «только камера» или «две камеры». Тогда эталон виден только наложением. */
-const cameraUnderContent = (s: Ui) => s.solo === 'camera' || s.layout === 'dual';
+/**
+ * Под эталоном камера: «только камера» или «две камеры». Тогда эталон виден только наложением.
+ * В «Разборе» камеры нет: видео во второй части видно всегда и не становится полупрозрачным.
+ */
+const cameraUnderContent = (s: Ui) => s.layout !== 'review' && (s.solo === 'camera' || s.layout === 'dual');
 
 /** Эталон лежит поверх камеры (и получает прозрачность и жесты выравнивания). */
 export const selectOverlayActive = (s: Ui) => s.overlay && cameraUnderContent(s);
@@ -112,6 +122,12 @@ export const selectCameraInContent = (s: Ui) => s.layout === 'dual' && s.solo !=
  * Если на экране одна камера, копия не нужна: эталон второй части сам ложится поверх камеры.
  */
 export const selectOverlayCopy = (s: Ui) => s.layout === 'sync' && s.solo === null && s.overlay;
+
+/** «Разбор»: в первой части вместо камеры — копия видео из второй, на общем таймлайне. */
+export const selectReviewCopy = (s: Ui) => s.layout === 'review' && s.solo !== 'content';
+
+/** «Разбор»: во второй части поверх видео — слой (элемент из другого раздела). */
+export const selectReviewLayer = (s: Ui) => s.layout === 'review' && s.overlay && s.solo !== 'camera';
 
 // Прозрачность — CSS-переменная на корне документа: слайдер меняет её без перерисовки всего приложения.
 if (typeof document !== 'undefined') {

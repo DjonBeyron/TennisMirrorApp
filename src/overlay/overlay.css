@@ -54,3 +54,39 @@
   z-index: 2;
   opacity: var(--overlay-opacity, 0.5);
 }
+
+/* «Разбор», первая часть: копия видео непрозрачна и закрывает камеру под собой. */
+.review-copy {
+  z-index: 2;
+  background: var(--bg);
+}
+
+.review-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--text-dim);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* «Разбор», вторая часть: слой поверх видео — над ним (z-index 2), под кнопками (z-index 3). */
+.review-layer {
+  z-index: 2;
+  opacity: var(--overlay-opacity, 0.5);
+}
+
+.layer-counter {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.layer-note {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+}

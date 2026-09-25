@@ -37,8 +37,13 @@ interface ContentState {
   addRecording: (item: MediaItem) => Promise<void>;
   remove: (id: string) => Promise<void>;
   go: (direction: 1 | -1) => void;
+  /** Листать слой «Разбора» — элементы другого раздела, не того, что показан во второй части. */
+  goLayer: (direction: 1 | -1) => void;
   cycleSpeed: () => void;
 }
+
+/** Другой раздел: из него берётся слой поверх видео в «Разборе» (запись в «Записях» — эталон в «Эталоне»). */
+export const otherPack = (pack: PackId): PackId => (pack === 'local' ? 'recordings' : 'local');
 
 export const useContent = create<ContentState>()((set, get) => {
   const patch = (id: PackId, change: (pack: Pack) => Pack) =>
@@ -94,6 +99,10 @@ export const useContent = create<ContentState>()((set, get) => {
       patch(get().pack, (p) => ({ ...p, index: clampIndex(p.index + direction, p.items) }));
     },
 
+    goLayer(direction) {
+      patch(otherPack(get().pack), (p) => ({ ...p, index: clampIndex(p.index + direction, p.items) }));
+    },
+
     cycleSpeed() {
       set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] }));
     },
@@ -106,6 +115,10 @@ export const selectItems = (s: Content) => s.packs[s.pack].items;
 export const selectIndex = (s: Content) => s.packs[s.pack].index;
 export const selectCount = (s: Content) => s.packs[s.pack].items.length;
 export const selectCurrent = (s: Content): MediaItem | undefined => selectItems(s)[selectIndex(s)];
+
+export const selectLayerPack = (s: Content) => s.packs[otherPack(s.pack)];
+export const selectLayerItem = (s: Content): MediaItem | undefined =>
+  selectLayerPack(s).items[selectLayerPack(s).index];
 
 /** Видео текущего слайда. Пока ref не обновился, в store может лежать элемент прошлого слайда. */
 export const selectCurrentVideo = (s: Content) =>

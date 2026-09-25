@@ -63,42 +63,45 @@ export function HideButton() {
   );
 }
 
-/**
- * Кнопки раскладки в полосе камеры: поменять местами (или показать другую часть), раскладка,
- * наложение, «1 | 2», скрыть.
- */
-const LAYOUTS: { id: Layout; label: string; title: string }[] = [
-  { id: 'split', label: 'Рядом', title: 'Камера и эталон рядом' },
-  { id: 'dual', label: '2 камеры', title: 'Камера в обеих частях, во второй — эталон поверх' },
-  { id: 'sync', label: 'Синхрон', title: 'Эталон поверх камеры и тот же эталон рядом, пауза общая' },
+const LAYOUTS: { id: Layout; label: string }[] = [
+  { id: 'split', label: 'Рядом' },
+  { id: 'dual', label: '2 камеры' },
+  { id: 'sync', label: 'Синхрон' },
+  { id: 'review', label: 'Разбор' },
 ];
 
-/** Раскладка двух частей: «Рядом», «2 камеры», «Синхрон». */
+/**
+ * Раскладка двух частей — системный выпадающий список: четыре варианта кнопками в полосу не помещаются.
+ * «Рядом» — камера и эталон; «2 камеры» — во второй части камера с эталоном поверх; «Синхрон» — эталон
+ * поверх камеры и тот же эталон рядом; «Разбор» — без камеры: одно видео в обеих частях, во второй слой.
+ */
 export function LayoutSwitch() {
   const layout = useUi((s) => s.layout);
   const setLayout = useUi((s) => s.setLayout);
   return (
-    <div className="seg layout-switch" role="radiogroup" aria-label="Раскладка">
-      {LAYOUTS.map(({ id, label, title }) => (
-        <button
-          key={id}
-          type="button"
-          role="radio"
-          aria-checked={layout === id}
-          title={title}
-          onClick={() => setLayout(id)}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <label className="layout-select layout-switch">
+      <select aria-label="Раскладка" value={layout} onChange={(e) => setLayout(e.target.value as Layout)}>
+        {LAYOUTS.map(({ id, label }) => (
+          <option key={id} value={id}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
+/**
+ * Кнопки раскладки в полосе камеры: поменять местами (или показать другую часть), раскладка,
+ * наложение, «1 | 2», скрыть.
+ */
 export function GlobalTools() {
   const cameraSolo = useUi((s) => s.solo === 'camera');
   // Кнопка наложения — там, где эталон ложится поверх этой камеры: одна камера на весь экран или «Синхрон».
-  const overlayHere = useUi((s) => s.solo === 'camera' || (s.solo === null && s.layout === 'sync'));
+  // В «Разборе» камеры нет — слоем управляет вторая часть.
+  const overlayHere = useUi(
+    (s) => s.layout !== 'review' && (s.solo === 'camera' || (s.solo === null && s.layout === 'sync')),
+  );
   const overlay = useUi((s) => s.overlay);
   const toggleSwapped = useUi((s) => s.toggleSwapped);
   const toggleOverlay = useUi((s) => s.toggleOverlay);

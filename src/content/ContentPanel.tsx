@@ -1,10 +1,18 @@
 import { useEffect, useRef, type ChangeEvent } from 'react';
 import { CameraMirror } from '../camera/CameraMirror';
 import { HideButton, HudRestore, OtherSpaceButton, SpacesSwitch } from '../layout/Hud';
+import { LayerControls } from '../overlay/LayerControls';
 import { OverlayControls } from '../overlay/OverlayControls';
+import { ReviewLayer } from '../overlay/SyncedMedia';
 import { shareOrDownload } from '../platform/share';
 import { selectCount, selectCurrent, selectCurrentVideo, selectIndex, useContent } from '../store/content';
-import { selectCameraInContent, selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
+import {
+  selectCameraInContent,
+  selectContentVisible,
+  selectOverlayActive,
+  selectReviewLayer,
+  useUi,
+} from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { LayersIcon, MirrorIcon, PlusIcon, ShareIcon, TrashIcon } from '../ui/icons';
 import { ContentNav } from './ContentNav';
@@ -35,6 +43,9 @@ export function ContentPanel() {
   const solo = useUi((s) => s.solo === 'content');
   const overlay = useUi((s) => s.overlay);
   const overlayActive = useUi(selectOverlayActive);
+  // «Разбор»: слой поверх видео (элемент другого раздела) и кнопка, чтобы его убрать.
+  const reviewLayer = useUi(selectReviewLayer);
+  const review = useUi((s) => s.layout === 'review' && s.solo !== 'camera');
   const visible = useUi(selectContentVisible);
   const mirror = useUi((s) => s.mirrorContent);
   const toggleMirror = useUi((s) => s.toggleMirrorContent);
@@ -69,6 +80,7 @@ export function ContentPanel() {
     <section className="panel panel-content" aria-label="Эталон">
       {dual && <CameraMirror />}
       {count > 0 && <ContentStage />}
+      {reviewLayer && count > 0 && <ReviewLayer />}
       {visible && <ContentNav />}
       {count === 0 && loaded && plain && (
         <div className="content-empty">
@@ -112,8 +124,12 @@ export function ContentPanel() {
           )}
         </div>
         <div className="tool-group">
-          {dual && (
-            <IconButton label="Эталон поверх камеры" aria-pressed={overlay} onClick={toggleOverlay}>
+          {(dual || review) && (
+            <IconButton
+              label={review ? 'Слой поверх видео' : 'Эталон поверх камеры'}
+              aria-pressed={overlay}
+              onClick={toggleOverlay}
+            >
               <LayersIcon />
             </IconButton>
           )}
@@ -125,6 +141,7 @@ export function ContentPanel() {
 
       <div className="panel-bottom hud">
         {overlayActive && <OverlayControls full={false} />}
+        {reviewLayer && count > 0 && <LayerControls />}
         {visible && video && current && <VideoControls key={current.id} video={video} />}
       </div>
 

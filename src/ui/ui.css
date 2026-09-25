@@ -78,6 +78,37 @@
   opacity: 0.4;
 }
 
+/* Выпадающий список в стиле кнопок (раскладка). Сам список — системный: привычный и компактный. */
+.layout-select {
+  position: relative;
+  display: inline-flex;
+}
+
+.layout-select select {
+  height: var(--btn);
+  padding: 0 20px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--hud-bg);
+  color: var(--text);
+  font:
+    500 11px system-ui,
+    sans-serif;
+}
+
+.layout-select::after {
+  content: '▾';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--text-dim);
+  font-size: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .text-btn {
   min-height: 40px;
   padding: 0 18px;

@@ -1,8 +1,8 @@
 import { GlobalTools, HudRestore } from '../layout/Hud';
 import { OverlayControls } from '../overlay/OverlayControls';
-import { OverlayCopy } from '../overlay/OverlayCopy';
+import { OverlayCopy, ReviewCopy } from '../overlay/SyncedMedia';
 import { useWakeLock } from '../platform/wakeLock';
-import { selectOverlayCopy, useUi } from '../store/ui';
+import { selectOverlayCopy, selectReviewCopy, useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { FitContainIcon, FitCoverIcon, FlipCameraIcon } from '../ui/icons';
 import { Version } from '../ui/Version';
@@ -28,6 +28,9 @@ export function CameraPanel() {
   const overlayHere = useUi((s) => s.solo === 'camera' && s.overlay);
   // «Синхрон»: поверх камеры — копия эталона; пауза и остальное управление — во второй части.
   const overlayCopy = useUi(selectOverlayCopy);
+  // «Разбор»: вместо камеры — то же видео, что во второй части. Камера работает под ним (без перезапуска),
+  // её кнопки не нужны; кнопка съёмки остаётся, только если запись уже идёт, — чтобы её остановить.
+  const review = useUi(selectReviewCopy);
   const overlayControls = overlayHere ? (
     <OverlayControls full />
   ) : overlayCopy ? (
@@ -61,8 +64,9 @@ export function CameraPanel() {
       />
 
       {overlayCopy && <OverlayCopy />}
+      {review && <ReviewCopy />}
 
-      {status !== 'live' && (
+      {status !== 'live' && !review && (
         <div className="camera-message">
           {status === 'error' ? error : 'Включаю камеру…'}
           {status === 'error' && (
@@ -73,7 +77,9 @@ export function CameraPanel() {
         </div>
       )}
 
-      {track ? (
+      {review ? (
+        <div className="panel-bottom hud">{recording && captureBar}</div>
+      ) : track ? (
         <ZoomLayer key={track.id} track={track} above={overlayControls} below={captureBar} />
       ) : (
         <div className="panel-bottom hud">{overlayControls}</div>
@@ -81,13 +87,20 @@ export function CameraPanel() {
 
       <div className="panel-bar hud">
         <div className="tool-group">
-          {/* Смена камеры останавливает поток — во время записи недоступна. */}
-          <IconButton label="Переключить камеру" disabled={recording} onClick={toggleFacing}>
-            <FlipCameraIcon />
-          </IconButton>
-          <IconButton label={fit === 'contain' ? 'Кадр на всю панель' : 'Кадр целиком'} onClick={toggleFit}>
-            {fit === 'contain' ? <FitCoverIcon /> : <FitContainIcon />}
-          </IconButton>
+          {!review && (
+            <>
+              {/* Смена камеры останавливает поток — во время записи недоступна. */}
+              <IconButton label="Переключить камеру" disabled={recording} onClick={toggleFacing}>
+                <FlipCameraIcon />
+              </IconButton>
+              <IconButton
+                label={fit === 'contain' ? 'Кадр на всю панель' : 'Кадр целиком'}
+                onClick={toggleFit}
+              >
+                {fit === 'contain' ? <FitCoverIcon /> : <FitContainIcon />}
+              </IconButton>
+            </>
+          )}
         </div>
         <GlobalTools />
       </div>
