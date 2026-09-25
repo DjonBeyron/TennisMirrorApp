@@ -45,3 +45,12 @@
   border-color: transparent;
   background: transparent;
 }
+
+/*
+ * «Синхрон»: копия эталона поверх камеры — над видео камеры и её слоем щипка (z-index 1),
+ * под кнопками (z-index 3). Прозрачность та же, что у любого наложения.
+ */
+.overlay-copy {
+  z-index: 2;
+  opacity: var(--overlay-opacity, 0.5);
+}

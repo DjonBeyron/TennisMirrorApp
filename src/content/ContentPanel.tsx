@@ -29,7 +29,8 @@ export function ContentPanel() {
   const add = useContent((s) => s.add);
   const remove = useContent((s) => s.remove);
   const dual = useUi(selectCameraInContent);
-  const split = useUi((s) => s.layout === 'split');
+  // Во второй части сам эталон (не камера): «Рядом» и «Синхрон» — тогда подсказываем, как его добавить.
+  const plain = useUi((s) => s.layout !== 'dual');
   // Когда эта часть одна на экране, кнопки «скрыть» и «показать» нужны здесь: полоса камеры скрыта.
   const solo = useUi((s) => s.solo === 'content');
   const overlay = useUi((s) => s.overlay);
@@ -69,7 +70,7 @@ export function ContentPanel() {
       {dual && <CameraMirror />}
       {count > 0 && <ContentStage />}
       {visible && <ContentNav />}
-      {count === 0 && loaded && split && (
+      {count === 0 && loaded && plain && (
         <div className="content-empty">
           {empty}
           {!recordingsPack && (

@@ -42,6 +42,56 @@ export function fixInfiniteDuration(video: HTMLVideoElement): () => void {
   };
 }
 
+/** На ходу копии можно отстать на долю секунды: чаще подтягивать — видео будет дёргаться. */
+export const SYNC_DRIFT_S = 0.15;
+
+type SyncTarget = Pick<
+  HTMLVideoElement,
+  | 'paused'
+  | 'currentTime'
+  | 'playbackRate'
+  | 'defaultPlaybackRate'
+  | 'play'
+  | 'pause'
+  | 'addEventListener'
+  | 'removeEventListener'
+>;
+
+/**
+ * Копия повторяет главное видео: пуск и пауза, перемотка, кадр ±1, скорость. На паузе кадр совпадает
+ * точно, на ходу расхождение больше SYNC_DRIFT_S подтягивается. Возвращает отписку.
+ */
+export function syncVideo(master: SyncTarget, copy: SyncTarget): () => void {
+  const align = () => {
+    const limit = master.paused ? 0.001 : SYNC_DRIFT_S;
+    if (Math.abs(copy.currentTime - master.currentTime) > limit) copy.currentTime = master.currentTime;
+  };
+  const onPlay = () => {
+    align();
+    copy.play().catch(() => {});
+  };
+  const onPause = () => {
+    copy.pause();
+    copy.currentTime = master.currentTime;
+  };
+  const onRate = () => {
+    copy.defaultPlaybackRate = master.playbackRate;
+    copy.playbackRate = master.playbackRate;
+  };
+  const handlers: [string, () => void][] = [
+    ['play', onPlay],
+    ['pause', onPause],
+    ['seeked', align],
+    ['timeupdate', align],
+    ['ratechange', onRate],
+  ];
+  handlers.forEach(([name, fn]) => master.addEventListener(name, fn));
+  onRate();
+  if (master.paused) onPause();
+  else onPlay();
+  return () => handlers.forEach(([name, fn]) => master.removeEventListener(name, fn));
+}
+
 const EVENTS = ['play', 'pause', 'timeupdate', 'loadedmetadata', 'durationchange', 'seeked'] as const;
 
 const read = (video: HTMLVideoElement) => ({

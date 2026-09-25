@@ -130,18 +130,6 @@ export function TrashIcon() {
   );
 }
 
-/** Две камеры: экран, разделённый пополам, в каждой половине объектив. */
-export function DualIcon() {
-  return (
-    <svg {...stroke}>
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path d="M12 5v14" />
-      <circle cx="7" cy="12" r="2" />
-      <circle cx="17" cy="12" r="2" />
-    </svg>
-  );
-}
-
 /** Наложение: два слоя, верхний полупрозрачный. */
 export function LayersIcon() {
   return (

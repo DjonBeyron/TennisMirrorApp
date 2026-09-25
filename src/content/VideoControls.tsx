@@ -60,7 +60,11 @@ export function VideoControls({ video }: { video: HTMLVideoElement }) {
         <IconButton label="Кадр назад" onClick={() => step(-FRAME_S)}>
           <StepBackIcon />
         </IconButton>
-        <IconButton label={paused ? 'Воспроизвести' : 'Пауза'} onClick={() => togglePlay(video)}>
+        <IconButton
+          className="vc-play"
+          label={paused ? 'Воспроизвести' : 'Пауза'}
+          onClick={() => togglePlay(video)}
+        >
           {paused ? <PlayIcon /> : <PauseIcon />}
         </IconButton>
         <IconButton label="Кадр вперёд" onClick={() => step(FRAME_S)}>

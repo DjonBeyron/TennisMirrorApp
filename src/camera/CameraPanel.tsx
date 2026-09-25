@@ -1,7 +1,8 @@
 import { GlobalTools, HudRestore } from '../layout/Hud';
 import { OverlayControls } from '../overlay/OverlayControls';
+import { OverlayCopy } from '../overlay/OverlayCopy';
 import { useWakeLock } from '../platform/wakeLock';
-import { useUi } from '../store/ui';
+import { selectOverlayCopy, useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { FitContainIcon, FitCoverIcon, FlipCameraIcon } from '../ui/icons';
 import { Version } from '../ui/Version';
@@ -25,7 +26,13 @@ export function CameraPanel() {
 
   // Эталон поверх камеры на весь экран — его управление стоит в нижней полосе этой панели.
   const overlayHere = useUi((s) => s.solo === 'camera' && s.overlay);
-  const overlayControls = overlayHere ? <OverlayControls full /> : null;
+  // «Синхрон»: поверх камеры — копия эталона; пауза и остальное управление — во второй части.
+  const overlayCopy = useUi(selectOverlayCopy);
+  const overlayControls = overlayHere ? (
+    <OverlayControls full />
+  ) : overlayCopy ? (
+    <OverlayControls full={false} />
+  ) : null;
   const captureBar = (
     <CaptureBar
       mode={mode}
@@ -52,6 +59,8 @@ export function CameraPanel() {
         playsInline
         disablePictureInPicture
       />
+
+      {overlayCopy && <OverlayCopy />}
 
       {status !== 'live' && (
         <div className="camera-message">

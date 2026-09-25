@@ -197,6 +197,24 @@
   pointer-events: auto;
 }
 
+/*
+ * Низкая или узкая панель: внизу остаётся главное (съёмка, управление видео), а кнопки зума и прозрачность
+ * прячутся — иначе стопка упрётся в верхнюю полосу. Зумить можно щипком, остальное — растянув панель.
+ */
+@container (max-height: 220px) or (max-width: 240px) {
+  .panel-bottom .zoom-bar,
+  .panel-bottom .overlay-controls {
+    display: none;
+  }
+}
+
+/* В узкой полоске раскладку не меняют — переключатель вернётся, когда панель станет шире. */
+@container (max-width: 240px) {
+  .layout-switch {
+    display: none;
+  }
+}
+
 /* Скрытый HUD: все элементы с классом .hud прячутся, остаётся кнопка «Показать». */
 .app[data-hud='off'] .hud,
 .app[data-hud='off'] .version {

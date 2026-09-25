@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { SPLIT_DEFAULT } from '../layout/split';
 
-/** split — камера и эталон рядом; dual — камера в обеих частях (во второй можно наложить эталон). */
-export type Layout = 'split' | 'dual';
+/**
+ * split — камера и эталон рядом; dual — камера в обеих частях (во второй можно наложить эталон);
+ * sync — камера с эталоном поверх и тот же эталон рядом, пауза и перемотка у них общие.
+ */
+export type Layout = 'split' | 'dual' | 'sync';
 /** Часть экрана: камера или вторая часть (эталон, а в dual — камера с наложенным эталоном). */
 export type Space = 'camera' | 'content';
 export type Facing = 'user' | 'environment';
@@ -36,7 +39,7 @@ interface UiState {
   setSplit: (split: number) => void;
   setOverlayOpacity: (opacity: number) => void;
   toggleSwapped: () => void;
-  toggleDual: () => void;
+  setLayout: (layout: Layout) => void;
   /** Одна часть на весь экран (camera | content) или обе (null). */
   setSolo: (solo: Space | null) => void;
   toggleOverlay: () => void;
@@ -64,7 +67,7 @@ export const useUi = create<UiState>()(
       setSplit: (split) => set({ split }),
       setOverlayOpacity: (opacity) => set({ overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, opacity)) }),
       toggleSwapped: () => set((s) => ({ swapped: !s.swapped })),
-      toggleDual: () => set((s) => ({ layout: s.layout === 'dual' ? 'split' : 'dual' })),
+      setLayout: (layout) => set({ layout }),
       setSolo: (solo) => set({ solo }),
       toggleOverlay: () => set((s) => ({ overlay: !s.overlay })),
       toggleHud: () => set((s) => ({ hud: !s.hud })),
@@ -103,6 +106,12 @@ export const selectContentVisible = (s: Ui) => (cameraUnderContent(s) ? s.overla
 
 /** Вторая часть показывает камеру (режим «две камеры»), если не открыта одна камера на весь экран. */
 export const selectCameraInContent = (s: Ui) => s.layout === 'dual' && s.solo !== 'camera';
+
+/**
+ * «Синхрон» с обеими частями: в панели камеры поверх неё — копия эталона из второй части, синхронная с ним.
+ * Если на экране одна камера, копия не нужна: эталон второй части сам ложится поверх камеры.
+ */
+export const selectOverlayCopy = (s: Ui) => s.layout === 'sync' && s.solo === null && s.overlay;
 
 // Прозрачность — CSS-переменная на корне документа: слайдер меняет её без перерисовки всего приложения.
 if (typeof document !== 'undefined') {

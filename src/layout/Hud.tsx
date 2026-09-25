@@ -1,7 +1,7 @@
 import { enterFullscreen, exitFullscreen } from '../platform/fullscreen';
-import { useUi, type Space } from '../store/ui';
+import { useUi, type Layout, type Space } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
-import { DualIcon, EyeIcon, EyeOffIcon, LayersIcon, SwapIcon } from '../ui/icons';
+import { EyeIcon, EyeOffIcon, LayersIcon, SwapIcon } from '../ui/icons';
 
 /**
  * «1 | 2» — сколько частей экрана показывать. Стоит в полосе каждой части: «1» оставляет на экране
@@ -64,15 +64,43 @@ export function HideButton() {
 }
 
 /**
- * Кнопки раскладки в полосе камеры: поменять местами (или показать другую часть), две камеры /
+ * Кнопки раскладки в полосе камеры: поменять местами (или показать другую часть), раскладка,
  * наложение, «1 | 2», скрыть.
  */
+const LAYOUTS: { id: Layout; label: string; title: string }[] = [
+  { id: 'split', label: 'Рядом', title: 'Камера и эталон рядом' },
+  { id: 'dual', label: '2 камеры', title: 'Камера в обеих частях, во второй — эталон поверх' },
+  { id: 'sync', label: 'Синхрон', title: 'Эталон поверх камеры и тот же эталон рядом, пауза общая' },
+];
+
+/** Раскладка двух частей: «Рядом», «2 камеры», «Синхрон». */
+export function LayoutSwitch() {
+  const layout = useUi((s) => s.layout);
+  const setLayout = useUi((s) => s.setLayout);
+  return (
+    <div className="seg layout-switch" role="radiogroup" aria-label="Раскладка">
+      {LAYOUTS.map(({ id, label, title }) => (
+        <button
+          key={id}
+          type="button"
+          role="radio"
+          aria-checked={layout === id}
+          title={title}
+          onClick={() => setLayout(id)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function GlobalTools() {
   const cameraSolo = useUi((s) => s.solo === 'camera');
-  const dual = useUi((s) => s.layout === 'dual');
+  // Кнопка наложения — там, где эталон ложится поверх этой камеры: одна камера на весь экран или «Синхрон».
+  const overlayHere = useUi((s) => s.solo === 'camera' || (s.solo === null && s.layout === 'sync'));
   const overlay = useUi((s) => s.overlay);
   const toggleSwapped = useUi((s) => s.toggleSwapped);
-  const toggleDual = useUi((s) => s.toggleDual);
   const toggleOverlay = useUi((s) => s.toggleOverlay);
 
   return (
@@ -84,12 +112,8 @@ export function GlobalTools() {
           <SwapIcon className="rotate-landscape" />
         </IconButton>
       )}
-      {!cameraSolo && (
-        <IconButton label="Две камеры" aria-pressed={dual} onClick={toggleDual}>
-          <DualIcon />
-        </IconButton>
-      )}
-      {cameraSolo && (
+      {!cameraSolo && <LayoutSwitch />}
+      {overlayHere && (
         <IconButton label="Эталон поверх камеры" aria-pressed={overlay} onClick={toggleOverlay}>
           <LayersIcon />
         </IconButton>
