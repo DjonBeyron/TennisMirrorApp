@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Проверка камеры — TennisMirror</title>
+    <style>
+      /* Иначе display у .row и video перебивает атрибут hidden. */
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 8px max(8px, env(safe-area-inset-right)) 24px max(8px, env(safe-area-inset-left));
+        background: #000;
+        color: #fff;
+        font:
+          14px system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      video {
+        display: block;
+        width: 100%;
+        height: 40vh;
+        background: #111;
+        object-fit: contain;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      button,
+      select {
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background: #222;
+        color: #fff;
+        font: inherit;
+      }
+      input[type='range'] {
+        flex: 1;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        -webkit-user-select: text;
+        user-select: text;
+      }
+    </style>
+  </head>
+  <body>
+    <video id="preview" autoplay muted playsinline></video>
+    <div class="row">
+      <select id="facing">
+        <option value="user">Фронтальная</option>
+        <option value="environment">Задняя</option>
+      </select>
+      <select id="device">
+        <option value="">По направлению</option>
+      </select>
+      <button id="start">Старт камеры</button>
+    </div>
+    <div class="row" id="zoomRow" hidden>
+      <span>Зум</span><input id="zoom" type="range" /><span id="zoomVal"></span>
+    </div>
+    <div id="zoomNote"></div>
+    <div class="row">
+      <button id="fps">Попробовать 60 кадров/с</button>
+      <button id="record">Запись 3 с</button>
+      <button id="copy">Копировать отчёт</button>
+      <button id="share" hidden>Отправить отчёт</button>
+    </div>
+    <video id="rec" controls playsinline hidden></video>
+    <pre id="out"></pre>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const MIME = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+      const report = {};
+      const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
+      let stream = null;
+      let recUrl = null;
+
+      const track = () => stream && stream.getVideoTracks()[0];
+      const pick = (obj, keys) => Object.fromEntries(keys.map((k) => [k, !!obj[k]]));
+      const strip = ({ deviceId, groupId, ...rest }) => rest;
+
+      function environment() {
+        let shareFiles = false;
+        try {
+          shareFiles = !!navigator.canShare?.({ files: [new File([''], 't.mp4', { type: 'video/mp4' })] });
+        } catch {}
+        return {
+          userAgent: navigator.userAgent,
+          screen: {
+            viewport: `${innerWidth}×${innerHeight}`,
+            screen: `${screen.width}×${screen.height}`,
+            dpr: devicePixelRatio,
+            orientation: screen.orientation?.type,
+          },
+          secureContext: isSecureContext,
+          standalone: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+          wakeLock: 'wakeLock' in navigator,
+          fullscreenApi: !!document.documentElement.requestFullscreen,
+          shareFiles,
+          recorderTypes: MIME.filter((t) => window.MediaRecorder?.isTypeSupported(t)),
+          supportedConstraints: pick(navigator.mediaDevices?.getSupportedConstraints?.() ?? {}, [
+            'zoom',
+            'torch',
+            'frameRate',
+            'facingMode',
+            'focusMode',
+            'resizeMode',
+          ]),
+        };
+      }
+
+      function render() {
+        report.environment = environment();
+        const t = track();
+        if (t) {
+          report.track = {
+            label: t.label,
+            settings: strip(t.getSettings()),
+            capabilities: t.getCapabilities ? strip(t.getCapabilities()) : 'getCapabilities нет',
+          };
+        }
+        $('out').textContent = JSON.stringify(report, null, 2);
+      }
+
+      async function listDevices() {
+        const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+        report.cameras = cams.map((d, i) => d.label || `Камера ${i + 1}`);
+        const sel = $('device');
+        const current = sel.value;
+        sel.replaceChildren(
+          new Option('По направлению', ''),
+          ...cams.map((d, i) => new Option(d.label || `Камера ${i + 1}`, d.deviceId)),
+        );
+        sel.value = current;
+      }
+
+      async function start() {
+        stream?.getTracks().forEach((t) => t.stop());
+        const id = $('device').value;
+        const video = { ...base, ...(id ? { deviceId: { exact: id } } : { facingMode: $('facing').value }) };
+        delete report.error;
+        try {
+          // Chrome просит запрашивать zoom при открытии камеры; если браузер не принял — открываем без него.
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { ...video, zoom: true } });
+            report.zoomRequested = 'ok';
+          } catch (e) {
+            report.zoomRequested = `ошибка: ${e.name}`;
+            stream = await navigator.mediaDevices.getUserMedia({ video });
+          }
+          $('preview').srcObject = stream;
+          await listDevices();
+          setupZoom();
+        } catch (e) {
+          report.error = `${e.name}: ${e.message}`;
+        }
+        render();
+      }
+
+      function setupZoom() {
+        const caps = track().getCapabilities?.() ?? {};
+        const z = $('zoom');
+        $('zoomRow').hidden = !caps.zoom;
+        $('zoomNote').textContent = caps.zoom ? '' : 'У этой камеры zoom в getCapabilities нет.';
+        if (!caps.zoom) return;
+        z.min = caps.zoom.min;
+        z.max = caps.zoom.max;
+        z.step = caps.zoom.step || 0.1;
+        z.value = track().getSettings().zoom ?? caps.zoom.min;
+        $('zoomVal').textContent = `${Number(z.value).toFixed(2)}×`;
+      }
+
+      // Пока предыдущий applyConstraints не завершился, копим только последнее значение ползунка.
+      let zoomBusy = false;
+      let zoomNext = null;
+      async function applyZoom(value) {
+        zoomNext = value;
+        if (zoomBusy) return;
+        zoomBusy = true;
+        while (zoomNext !== null) {
+          const v = zoomNext;
+          zoomNext = null;
+          try {
+            await track().applyConstraints({ ...base, advanced: [{ zoom: v }] });
+          } catch (e) {
+            report.zoomError = `${e.name}: ${e.message}`;
+          }
+        }
+        zoomBusy = false;
+        $('zoomVal').textContent = `${Number(track().getSettings().zoom ?? 0).toFixed(2)}×`;
+        render();
+      }
+
+      async function tryFps60() {
+        if (!track()) return;
+        base.frameRate = { ideal: 60 };
+        try {
+          await track().applyConstraints(base);
+          report.fps60 = track().getSettings().frameRate;
+        } catch (e) {
+          report.fps60 = `ошибка: ${e.name}`;
+        }
+        render();
+      }
+
+      function recordTest() {
+        if (!stream) return;
+        const mimeType = MIME.find((t) => MediaRecorder.isTypeSupported(t));
+        const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+        const chunks = [];
+        rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+        rec.onstop = () => {
+          const blob = new Blob(chunks, { type: rec.mimeType });
+          report.recordTest = { mimeType: rec.mimeType, sizeKB: Math.round(blob.size / 1024) };
+          if (recUrl) URL.revokeObjectURL(recUrl);
+          recUrl = URL.createObjectURL(blob);
+          $('rec').src = recUrl;
+          $('rec').hidden = false;
+          $('record').textContent = 'Запись 3 с';
+          render();
+        };
+        rec.start();
+        $('record').textContent = 'Идёт запись…';
+        setTimeout(() => rec.stop(), 3000);
+      }
+
+      async function copyReport() {
+        render();
+        try {
+          await navigator.clipboard.writeText($('out').textContent);
+          $('copy').textContent = 'Скопировано';
+        } catch {
+          $('copy').textContent = 'Не вышло — выделите текст ниже';
+        }
+      }
+
+      $('start').onclick = start;
+      $('facing').onchange = () => (($('device').value = ''), start());
+      $('device').onchange = start;
+      $('zoom').oninput = (e) => applyZoom(Number(e.target.value));
+      $('fps').onclick = tryFps60;
+      $('record').onclick = recordTest;
+      $('copy').onclick = copyReport;
+      $('share').hidden = !navigator.share;
+      $('share').onclick = () => navigator.share({ title: 'TennisMirror probe', text: $('out').textContent });
+      addEventListener('resize', render);
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        report.error = 'Камера недоступна: страницу нужно открыть по HTTPS.';
+      }
+      render();
+    </script>
+  </body>
+</html>
