@@ -99,6 +99,30 @@
       const pick = (obj, keys) => Object.fromEntries(keys.map((k) => [k, !!obj[k]]));
       const strip = ({ deviceId, groupId, ...rest }) => rest;
 
+      // Высота экрана в разных единицах: в iOS PWA они расходятся на высоту строки состояния.
+      function heights() {
+        const probe = (css) => {
+          const el = document.createElement('div');
+          el.style.cssText = `position:fixed;left:0;width:1px;visibility:hidden;${css}`;
+          document.body.append(el);
+          const cs = getComputedStyle(el);
+          const px = { h: el.getBoundingClientRect().height, top: cs.paddingTop, bottom: cs.paddingBottom };
+          el.remove();
+          return px;
+        };
+        const safe = probe('padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)');
+        return {
+          ...Object.fromEntries(
+            ['100vh', '100lvh', '100dvh', '100svh'].map((u) => [u, probe(`height:${u}`).h]),
+          ),
+          fixedInset0: probe('top:0;bottom:0').h,
+          innerHeight,
+          visualViewport: window.visualViewport?.height,
+          safeAreaTop: safe.top,
+          safeAreaBottom: safe.bottom,
+        };
+      }
+
       function environment() {
         let shareFiles = false;
         try {
@@ -112,6 +136,7 @@
             dpr: devicePixelRatio,
             orientation: screen.orientation?.type,
           },
+          heights: heights(),
           secureContext: isSecureContext,
           standalone: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
           wakeLock: 'wakeLock' in navigator,
