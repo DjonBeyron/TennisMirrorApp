@@ -18,6 +18,8 @@ export function kindOf(file: { type: string; name: string }): MediaKind | null {
 export function filesToItems(files: File[], now = Date.now()): MediaItem[] {
   return files.flatMap((file, i): MediaItem[] => {
     const kind = kindOf(file);
-    return kind ? [{ id: crypto.randomUUID(), kind, name: file.name, blob: file, addedAt: now + i }] : [];
+    return kind
+      ? [{ id: crypto.randomUUID(), kind, name: file.name, blob: file, addedAt: now + i, imported: true }]
+      : [];
   });
 }

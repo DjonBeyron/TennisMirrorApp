@@ -31,7 +31,7 @@ interface ContentState {
   setVideo: (video: HTMLVideoElement | null) => void;
   setPack: (pack: PackId) => void;
   load: () => Promise<void>;
-  /** Файлы с устройства — в эталоны; раздел переключается на них. */
+  /** Файлы с устройства — в раздел, который сейчас открыт («Эталон» или «Записи»). */
   add: (files: File[]) => Promise<void>;
   /** Новая запись — в «Записи»; показанный раздел не меняется, чтобы не сбить наложенный эталон. */
   addRecording: (item: MediaItem) => Promise<void>;
@@ -74,10 +74,10 @@ export const useContent = create<ContentState>()((set, get) => {
     async add(files) {
       const added = filesToItems(files);
       if (!added.length) return;
-      await localPack.put(added);
+      const { pack } = get();
+      await STORES[pack].put(added);
       // Сразу показываем первый из добавленных.
-      patch('local', (p) => ({ items: [...p.items, ...added], index: p.items.length }));
-      set({ pack: 'local' });
+      patch(pack, (p) => ({ items: [...p.items, ...added], index: p.items.length }));
     },
 
     async addRecording(item) {

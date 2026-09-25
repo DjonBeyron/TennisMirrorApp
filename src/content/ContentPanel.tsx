@@ -66,14 +66,17 @@ export function ContentPanel() {
 
   function onDelete() {
     if (!current) return;
-    const question = recordingsPack
+    // Снятое в приложении есть только здесь; у добавленного с устройства копия остаётся в галерее.
+    // Эталоны всегда с устройства (у старых нет пометки imported), записи — пока не помечены иначе.
+    const onlyHere = recordingsPack && !current.imported;
+    const question = onlyHere
       ? `Удалить запись «${current.name}»? Отменить это нельзя: запись есть только в приложении.`
       : `Удалить «${current.name}» из приложения? Файл на устройстве останется.`;
     if (confirm(question)) void remove(current.id);
   }
 
   const empty = recordingsPack
-    ? 'Записей пока нет. Снимите себя кнопкой съёмки в панели камеры.'
+    ? 'Записей пока нет. Снимите себя кнопкой съёмки в панели камеры или добавьте видео с устройства.'
     : 'Добавьте видео или фото эталона с устройства';
 
   return (
@@ -85,22 +88,19 @@ export function ContentPanel() {
       {count === 0 && loaded && plain && (
         <div className="content-empty">
           {empty}
-          {!recordingsPack && (
-            <button type="button" className="text-btn" onClick={pickFiles}>
-              Выбрать файлы
-            </button>
-          )}
+          <button type="button" className="text-btn" onClick={pickFiles}>
+            Выбрать файлы
+          </button>
         </div>
       )}
 
       <div className="panel-bar hud">
         <div className="tool-group">
           <PackSwitch />
-          {!recordingsPack && (
-            <IconButton label="Добавить видео или фото" onClick={pickFiles}>
-              <PlusIcon />
-            </IconButton>
-          )}
+          {/* Добавляет в открытый раздел: в «Записи» тоже можно взять видео из галереи. */}
+          <IconButton label="Добавить видео или фото" onClick={pickFiles}>
+            <PlusIcon />
+          </IconButton>
           {count > 0 && current && (
             <>
               {recordingsPack && (
