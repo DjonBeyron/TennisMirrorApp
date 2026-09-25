@@ -1,72 +1,111 @@
 import { create } from 'zustand';
-import { addLocalFiles, loadLocalItems, removeLocalItem } from '../packs/localPack';
+import { filesToItems, localPack } from '../packs/localPack';
+import type { MediaStore } from '../packs/mediaStore';
 import { releaseMediaUrl } from '../packs/mediaUrl';
+import { recordingsPack } from '../packs/recordings';
 import type { MediaItem } from '../packs/types';
 
 /** Скорости воспроизведения эталона; кнопка перебирает их по кругу. */
 export const SPEEDS = [1, 0.5, 0.25];
 
-interface ContentState {
+/** local — эталоны с устройства; recordings — записи, снятые в приложении. */
+export type PackId = 'local' | 'recordings';
+
+interface Pack {
   items: MediaItem[];
   index: number;
+}
+
+const STORES: Record<PackId, MediaStore> = { local: localPack, recordings: recordingsPack };
+const EMPTY: Pack = { items: [], index: 0 };
+const clampIndex = (index: number, items: MediaItem[]) => Math.max(0, Math.min(index, items.length - 1));
+
+interface ContentState {
+  /** Какой раздел показан во второй части экрана. */
+  pack: PackId;
+  packs: Record<PackId, Pack>;
   loaded: boolean;
   speed: number;
-  /** Элемент <video> текущего эталона: им управляют и панель эталона, и панель камеры при наложении. */
+  /** Элемент <video> текущего слайда: им управляют и вторая часть, и панель камеры при наложении. */
   video: HTMLVideoElement | null;
   setVideo: (video: HTMLVideoElement | null) => void;
+  setPack: (pack: PackId) => void;
   load: () => Promise<void>;
+  /** Файлы с устройства — в эталоны; раздел переключается на них. */
   add: (files: File[]) => Promise<void>;
+  /** Новая запись — в «Записи»; показанный раздел не меняется, чтобы не сбить наложенный эталон. */
+  addRecording: (item: MediaItem) => Promise<void>;
   remove: (id: string) => Promise<void>;
   go: (direction: 1 | -1) => void;
   cycleSpeed: () => void;
 }
 
-export const useContent = create<ContentState>()((set, get) => ({
-  items: [],
-  index: 0,
-  loaded: false,
-  speed: 1,
-  video: null,
-  setVideo: (video) => set({ video }),
+export const useContent = create<ContentState>()((set, get) => {
+  const patch = (id: PackId, change: (pack: Pack) => Pack) =>
+    set((s) => ({ packs: { ...s.packs, [id]: change(s.packs[id]) } }));
 
-  async load() {
-    if (get().loaded) return;
-    try {
-      set({ items: await loadLocalItems(), loaded: true });
-    } catch {
-      // IndexedDB недоступна (например, приватный режим) — работаем без сохранённых файлов.
-      set({ loaded: true });
-    }
-  },
+  return {
+    pack: 'local',
+    packs: { local: EMPTY, recordings: EMPTY },
+    loaded: false,
+    speed: 1,
+    video: null,
+    setVideo: (video) => set({ video }),
+    setPack: (pack) => set({ pack }),
 
-  async add(files) {
-    const added = await addLocalFiles(files);
-    if (!added.length) return;
-    // Сразу показываем первый из добавленных.
-    set((s) => ({ items: [...s.items, ...added], index: s.items.length }));
-  },
+    async load() {
+      if (get().loaded) return;
+      // IndexedDB может быть недоступна (например, приватный режим) — тогда работаем без сохранённого.
+      const [local, recordings] = await Promise.all([
+        localPack.load().catch(() => []),
+        recordingsPack.load().catch(() => []),
+      ]);
+      set({
+        packs: { local: { items: local, index: 0 }, recordings: { items: recordings, index: 0 } },
+        loaded: true,
+      });
+    },
 
-  async remove(id) {
-    await removeLocalItem(id);
-    releaseMediaUrl(id);
-    set((s) => {
-      const items = s.items.filter((item) => item.id !== id);
-      return { items, index: Math.max(0, Math.min(s.index, items.length - 1)) };
-    });
-  },
+    async add(files) {
+      const added = filesToItems(files);
+      if (!added.length) return;
+      await localPack.put(added);
+      // Сразу показываем первый из добавленных.
+      patch('local', (p) => ({ items: [...p.items, ...added], index: p.items.length }));
+      set({ pack: 'local' });
+    },
 
-  go(direction) {
-    set((s) => ({ index: Math.max(0, Math.min(s.items.length - 1, s.index + direction)) }));
-  },
+    async addRecording(item) {
+      await recordingsPack.put([item]);
+      patch('recordings', (p) => ({ ...p, items: [...p.items, item] }));
+    },
 
-  cycleSpeed() {
-    set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] }));
-  },
-}));
+    async remove(id) {
+      const { pack } = get();
+      await STORES[pack].remove(id);
+      releaseMediaUrl(id);
+      patch(pack, (p) => {
+        const items = p.items.filter((item) => item.id !== id);
+        return { items, index: clampIndex(p.index, items) };
+      });
+    },
 
-type Content = Pick<ContentState, 'items' | 'index' | 'video'>;
+    go(direction) {
+      patch(get().pack, (p) => ({ ...p, index: clampIndex(p.index + direction, p.items) }));
+    },
 
-export const selectCurrent = (s: Content): MediaItem | undefined => s.items[s.index];
+    cycleSpeed() {
+      set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] }));
+    },
+  };
+});
+
+type Content = Pick<ContentState, 'pack' | 'packs' | 'video'>;
+
+export const selectItems = (s: Content) => s.packs[s.pack].items;
+export const selectIndex = (s: Content) => s.packs[s.pack].index;
+export const selectCount = (s: Content) => s.packs[s.pack].items.length;
+export const selectCurrent = (s: Content): MediaItem | undefined => selectItems(s)[selectIndex(s)];
 
 /** Видео текущего слайда. Пока ref не обновился, в store может лежать элемент прошлого слайда. */
 export const selectCurrentVideo = (s: Content) =>

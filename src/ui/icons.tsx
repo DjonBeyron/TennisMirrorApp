@@ -193,3 +193,13 @@ export function ChevronRightIcon() {
     </svg>
   );
 }
+
+/** Поделиться: стрелка вверх из коробки (как в iOS). */
+export function ShareIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M12 3v12M8 7l4-4 4 4" />
+      <path d="M6 11H5v10h14V11h-1" />
+    </svg>
+  );
+}

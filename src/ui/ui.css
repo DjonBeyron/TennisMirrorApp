@@ -39,6 +39,45 @@
   height: 66%;
 }
 
+/* Переключатель из нескольких вариантов («Видео / Фото», «Эталон / Записи»). */
+/* В узкой панели варианты переносятся друг под друга, длинная подпись обрезается многоточием. */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--hud-bg);
+}
+
+.seg > button {
+  min-width: 0;
+  height: calc(var(--btn) - 4px);
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font:
+    500 11px system-ui,
+    sans-serif;
+  white-space: nowrap;
+}
+
+.seg > button[aria-checked='true'],
+.seg > button[aria-selected='true'] {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.seg > button:disabled {
+  opacity: 0.4;
+}
+
 .text-btn {
   min-height: 40px;
   padding: 0 18px;

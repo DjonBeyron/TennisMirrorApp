@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useMediaGestures } from '../gestures/useMediaGestures';
 import { mediaUrl } from '../packs/mediaUrl';
 import type { MediaItem } from '../packs/types';
-import { selectCurrentVideo, useContent } from '../store/content';
+import { selectCurrentVideo, selectIndex, selectItems, useContent } from '../store/content';
 import { selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
-import { applySpeed, togglePlay } from './video';
+import { applySpeed, fixInfiniteDuration, togglePlay } from './video';
 
 /** Соседний слайд, видный во время свайпа. Видео не декодируем — только подпись. */
 function Preview({ item }: { item: MediaItem | undefined }) {
@@ -18,8 +18,8 @@ function Preview({ item }: { item: MediaItem | undefined }) {
  * Рядом с камерой свайп листает; поверх камеры жесты выравнивают эталон по фигуре.
  */
 export function ContentStage() {
-  const items = useContent((s) => s.items);
-  const index = useContent((s) => s.index);
+  const items = useContent(selectItems);
+  const index = useContent(selectIndex);
   const go = useContent((s) => s.go);
   const speed = useContent((s) => s.speed);
   const setVideo = useContent((s) => s.setVideo);
@@ -51,6 +51,10 @@ export function ContentStage() {
   useEffect(() => {
     if (!visible) video?.pause();
   }, [visible, video]);
+
+  useEffect(() => {
+    if (video) return fixInfiniteDuration(video);
+  }, [video]);
 
   useEffect(() => {
     if (!video) return;

@@ -1,24 +1,27 @@
 import { useEffect, useRef, type ChangeEvent } from 'react';
 import { CameraMirror } from '../camera/CameraMirror';
-import { OverlayControls } from '../overlay/OverlayControls';
-import { selectCurrent, selectCurrentVideo, useContent } from '../store/content';
 import { HideButton, HudRestore, SoloButton } from '../layout/Hud';
+import { OverlayControls } from '../overlay/OverlayControls';
+import { shareOrDownload } from '../platform/share';
+import { selectCount, selectCurrent, selectCurrentVideo, selectIndex, useContent } from '../store/content';
 import { selectCameraInContent, selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
-import { LayersIcon, MirrorIcon, PlusIcon, TrashIcon } from '../ui/icons';
+import { LayersIcon, MirrorIcon, PlusIcon, ShareIcon, TrashIcon } from '../ui/icons';
 import { ContentStage } from './ContentStage';
+import { PackSwitch } from './PackSwitch';
 import { VideoControls } from './VideoControls';
 import './content.css';
 
 /**
- * Вторая часть экрана: эталон (видео и фото с устройства). В режиме «две камеры» под эталоном —
- * второе превью камеры, а эталон накладывается поверх него (кнопкой, прозрачность — ползунком).
+ * Вторая часть экрана: эталоны с устройства или свои записи («Эталон / Записи»). В режиме «две камеры»
+ * под ними — второе превью камеры, а эталон накладывается поверх (кнопкой, прозрачность — ползунком).
  * Как и камеру, эту часть можно развернуть на весь экран.
  */
 export function ContentPanel() {
   const loaded = useContent((s) => s.loaded);
-  const count = useContent((s) => s.items.length);
-  const index = useContent((s) => s.index);
+  const recordingsPack = useContent((s) => s.pack === 'recordings');
+  const count = useContent(selectCount);
+  const index = useContent(selectIndex);
   const current = useContent(selectCurrent);
   const video = useContent(selectCurrentVideo);
   const load = useContent((s) => s.load);
@@ -49,10 +52,16 @@ export function ContentPanel() {
   }
 
   function onDelete() {
-    if (current && confirm(`Удалить «${current.name}» из приложения? Файл на устройстве останется.`)) {
-      void remove(current.id);
-    }
+    if (!current) return;
+    const question = recordingsPack
+      ? `Удалить запись «${current.name}»? Отменить это нельзя: запись есть только в приложении.`
+      : `Удалить «${current.name}» из приложения? Файл на устройстве останется.`;
+    if (confirm(question)) void remove(current.id);
   }
+
+  const empty = recordingsPack
+    ? 'Записей пока нет. Снимите себя кнопкой съёмки в панели камеры.'
+    : 'Добавьте видео или фото эталона с устройства';
 
   return (
     <section className="panel panel-content" aria-label="Эталон">
@@ -60,22 +69,34 @@ export function ContentPanel() {
       {count > 0 && <ContentStage />}
       {count === 0 && loaded && split && (
         <div className="content-empty">
-          Добавьте видео или фото эталона с устройства
-          <button type="button" className="text-btn" onClick={pickFiles}>
-            Выбрать файлы
-          </button>
-          <a href="/probe.html">Проверка камеры</a>
+          {empty}
+          {!recordingsPack && (
+            <button type="button" className="text-btn" onClick={pickFiles}>
+              Выбрать файлы
+            </button>
+          )}
         </div>
       )}
 
       <div className="panel-bar hud">
         <div className="tool-group">
-          <IconButton label="Добавить видео или фото" onClick={pickFiles}>
-            <PlusIcon />
-          </IconButton>
-          {count > 0 && (
+          <PackSwitch />
+          {!recordingsPack && (
+            <IconButton label="Добавить видео или фото" onClick={pickFiles}>
+              <PlusIcon />
+            </IconButton>
+          )}
+          {count > 0 && current && (
             <>
-              <IconButton label="Отразить эталон" aria-pressed={mirror} onClick={toggleMirror}>
+              {recordingsPack && (
+                <IconButton
+                  label="Поделиться или сохранить в галерею"
+                  onClick={() => void shareOrDownload(current)}
+                >
+                  <ShareIcon />
+                </IconButton>
+              )}
+              <IconButton label="Отразить" aria-pressed={mirror} onClick={toggleMirror}>
                 <MirrorIcon />
               </IconButton>
               <IconButton label="Удалить из приложения" onClick={onDelete}>

@@ -1,8 +1,8 @@
-import { createStore, del, set, values } from 'idb-keyval';
+import { mediaStore } from './mediaStore';
 import type { MediaItem, MediaKind } from './types';
 
-// Файлы, выбранные на устройстве, лежат в IndexedDB — после перезапуска их не нужно выбирать заново.
-const store = createStore('tennis-mirror', 'local-media');
+/** Эталоны — файлы, выбранные на устройстве. Имя базы прежнее: уже выбранные файлы сохраняются. */
+export const localPack = mediaStore('tennis-mirror', 'local-media');
 
 const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|avif)$/i;
@@ -14,22 +14,10 @@ export function kindOf(file: { type: string; name: string }): MediaKind | null {
   return null;
 }
 
-export async function loadLocalItems(): Promise<MediaItem[]> {
-  const items = await values<MediaItem>(store);
-  return items.sort((a, b) => a.addedAt - b.addedAt);
-}
-
-/** Сохраняет подходящие файлы (видео и фото), остальные пропускает. */
-export async function addLocalFiles(files: File[]): Promise<MediaItem[]> {
-  const now = Date.now();
-  const items = files.flatMap((file, i): MediaItem[] => {
+/** Подходящие файлы (видео и фото) превращает в элементы пака, остальные пропускает. */
+export function filesToItems(files: File[], now = Date.now()): MediaItem[] {
+  return files.flatMap((file, i): MediaItem[] => {
     const kind = kindOf(file);
     return kind ? [{ id: crypto.randomUUID(), kind, name: file.name, blob: file, addedAt: now + i }] : [];
   });
-  await Promise.all(items.map((item) => set(item.id, item, store)));
-  // Просим браузер не удалять данные сайта при нехватке места (особенно важно на iOS).
-  navigator.storage?.persist?.().catch(() => {});
-  return items;
 }
-
-export const removeLocalItem = (id: string) => del(id, store);

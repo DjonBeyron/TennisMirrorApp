@@ -9,6 +9,8 @@ export type Space = 'camera' | 'content';
 export type Facing = 'user' | 'environment';
 /** contain — кадр целиком с полями; cover — на всю панель с обрезкой краёв. */
 export type Fit = 'contain' | 'cover';
+/** Что снимает кнопка съёмки. */
+export type CaptureMode = 'video' | 'photo';
 
 export const OPACITY_MIN = 0.1;
 
@@ -30,6 +32,7 @@ interface UiState {
   cameraFit: Fit;
   /** Зеркалить эталон: удобно левше смотреть технику правши. */
   mirrorContent: boolean;
+  captureMode: CaptureMode;
   setSplit: (split: number) => void;
   setOverlayOpacity: (opacity: number) => void;
   toggleSwapped: () => void;
@@ -41,6 +44,7 @@ interface UiState {
   toggleFacing: () => void;
   toggleCameraFit: () => void;
   toggleMirrorContent: () => void;
+  setCaptureMode: (mode: CaptureMode) => void;
 }
 
 export const useUi = create<UiState>()(
@@ -56,6 +60,7 @@ export const useUi = create<UiState>()(
       facing: 'user',
       cameraFit: 'contain',
       mirrorContent: false,
+      captureMode: 'video',
       setSplit: (split) => set({ split }),
       setOverlayOpacity: (opacity) => set({ overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, opacity)) }),
       toggleSwapped: () => set((s) => ({ swapped: !s.swapped })),
@@ -66,6 +71,7 @@ export const useUi = create<UiState>()(
       toggleFacing: () => set((s) => ({ facing: s.facing === 'user' ? 'environment' : 'user' })),
       toggleCameraFit: () => set((s) => ({ cameraFit: s.cameraFit === 'contain' ? 'cover' : 'contain' })),
       toggleMirrorContent: () => set((s) => ({ mirrorContent: !s.mirrorContent })),
+      setCaptureMode: (captureMode) => set({ captureMode }),
     }),
     {
       name: 'tm-ui',
@@ -78,6 +84,7 @@ export const useUi = create<UiState>()(
         facing: s.facing,
         cameraFit: s.cameraFit,
         mirrorContent: s.mirrorContent,
+        captureMode: s.captureMode,
       }),
     },
   ),

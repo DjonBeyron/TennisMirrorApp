@@ -1,5 +1,5 @@
 import { togglePlay, useVideoState } from '../content/video';
-import { selectCurrent, selectCurrentVideo, useContent } from '../store/content';
+import { selectCount, selectCurrent, selectCurrentVideo, selectIndex, useContent } from '../store/content';
 import { useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { ChevronLeftIcon, ChevronRightIcon, MirrorIcon, PauseIcon, PlayIcon } from '../ui/icons';
@@ -20,8 +20,8 @@ function PlayButton({ video }: { video: HTMLVideoElement }) {
  * `full` — на весь экран: ещё пауза и зеркало, ведь свои кнопки панели эталона там скрыты.
  */
 export function OverlayControls({ full }: { full: boolean }) {
-  const count = useContent((s) => s.items.length);
-  const index = useContent((s) => s.index);
+  const count = useContent(selectCount);
+  const index = useContent(selectIndex);
   const current = useContent(selectCurrent);
   const video = useContent(selectCurrentVideo);
   const go = useContent((s) => s.go);
