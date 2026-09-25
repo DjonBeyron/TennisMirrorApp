@@ -1,5 +1,16 @@
 import { useEffect, useRef, type PointerEvent, type RefObject } from 'react';
-import { IDENTITY, clampView, isIdentity, pinchView, swipeDirection, type Point, type View } from './view';
+import {
+  ALIGN_MIN_SCALE,
+  IDENTITY,
+  clampAlign,
+  clampView,
+  isIdentity,
+  isZoomedIn,
+  pinchView,
+  swipeDirection,
+  type Point,
+  type View,
+} from './view';
 
 const TAP_MS = 250;
 const DOUBLE_TAP_MS = 300;
@@ -25,13 +36,18 @@ interface Options {
   resetKey: string | undefined;
   canPrev: boolean;
   canNext: boolean;
+  /**
+   * Выравнивание эталона поверх камеры: один палец всегда двигает, листания нет,
+   * масштаб от 0.3 (фигуру можно уменьшить до своего размера в кадре).
+   */
+  align: boolean;
   onSwipe: (direction: 1 | -1) => void;
   onTap: () => void;
 }
 
 /**
- * Жесты по контенту без перерисовки React: один палец — свайп (или сдвиг, если увеличено),
- * два — щипок, тап — onTap, двойной тап — сброс увеличения. Стили пишутся в requestAnimationFrame.
+ * Жесты по контенту без перерисовки React: один палец — свайп (или сдвиг, если увеличено или идёт
+ * выравнивание), два — щипок, тап — onTap, двойной тап — сброс. Стили пишутся в requestAnimationFrame.
  */
 export function useMediaGestures(o: Options) {
   const pointers = useRef(new Map<number, Point>());
@@ -76,9 +92,14 @@ export function useMediaGestures(o: Options) {
     return { mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
   }
 
+  const limit = (v: View) =>
+    o.align
+      ? clampAlign(v, box.current.width, box.current.height)
+      : clampView(v, box.current.width, box.current.height);
+
   function begin(point: Point, time: number) {
     start.current = { ...start.current, view: view.current, point, time };
-    mode.current = isIdentity(view.current) ? 'swipe' : 'pan';
+    mode.current = o.align || isZoomedIn(view.current) ? 'pan' : 'swipe';
     moved.current = false;
     swipeDx.current = 0;
   }
@@ -109,12 +130,13 @@ export function useMediaGestures(o: Options) {
     if (!pointers.current.has(e.pointerId)) return;
     const point = local(e);
     pointers.current.set(e.pointerId, point);
-    const { width, height } = box.current;
 
     if (mode.current === 'pinch' && pointers.current.size >= 2) {
       const { mid, dist } = twoFingers();
-      const next = pinchView(start.current.view, start.current.mid, mid, dist / start.current.dist);
-      view.current = clampView(next, width, height);
+      const minScale = o.align ? ALIGN_MIN_SCALE : 1;
+      view.current = limit(
+        pinchView(start.current.view, start.current.mid, mid, dist / start.current.dist, minScale),
+      );
       return schedule();
     }
 
@@ -125,7 +147,7 @@ export function useMediaGestures(o: Options) {
 
     if (mode.current === 'pan') {
       const { view: v } = start.current;
-      view.current = clampView({ s: v.s, x: v.x + dx, y: v.y + dy }, width, height);
+      view.current = limit({ s: v.s, x: v.x + dx, y: v.y + dy });
     } else if (mode.current === 'swipe') {
       const blocked = (dx > 0 && !o.canPrev) || (dx < 0 && !o.canNext);
       swipeDx.current = blocked ? dx / EDGE_RESISTANCE : dx;
@@ -142,7 +164,7 @@ export function useMediaGestures(o: Options) {
       const rest = [...pointers.current.values()][0];
       if (rest) begin(rest, e.timeStamp);
       moved.current = true;
-      mode.current = rest && !isIdentity(view.current) ? 'pan' : 'idle';
+      mode.current = rest && (o.align || isZoomedIn(view.current)) ? 'pan' : 'idle';
       return render();
     }
 

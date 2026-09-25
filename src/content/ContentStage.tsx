@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useMediaGestures } from '../gestures/useMediaGestures';
 import { mediaUrl } from '../packs/mediaUrl';
 import type { MediaItem } from '../packs/types';
-import { useContent } from '../store/content';
-import { useUi } from '../store/ui';
-import { VideoControls } from './VideoControls';
+import { selectCurrentVideo, useContent } from '../store/content';
+import { selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
+import { applySpeed, togglePlay } from './video';
 
 /** Соседний слайд, видный во время свайпа. Видео не декодируем — только подпись. */
 function Preview({ item }: { item: MediaItem | undefined }) {
@@ -15,19 +15,22 @@ function Preview({ item }: { item: MediaItem | undefined }) {
 
 /**
  * Лента из трёх ячеек: предыдущий, текущий и следующий эталон. Видео с `src` есть только у текущего.
- * Свайп листает, щипок увеличивает, тап — пауза, двойной тап — сброс увеличения.
+ * Рядом с камерой свайп листает; поверх камеры жесты выравнивают эталон по фигуре.
  */
 export function ContentStage() {
   const items = useContent((s) => s.items);
   const index = useContent((s) => s.index);
   const go = useContent((s) => s.go);
+  const speed = useContent((s) => s.speed);
+  const setVideo = useContent((s) => s.setVideo);
+  const video = useContent(selectCurrentVideo);
   const mirror = useUi((s) => s.mirrorContent);
-  const hidden = useUi((s) => s.mode === 'camera');
+  const visible = useUi(selectContentVisible);
+  const align = useUi(selectOverlayActive);
   const stageRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
-  const [video, setVideo] = useState<HTMLVideoElement | null>(null);
-  const videoRef = useCallback((el: HTMLVideoElement | null) => setVideo(el), []);
+  const videoRef = useCallback((el: HTMLVideoElement | null) => setVideo(el), [setVideo]);
 
   const current = items[index];
   const gestures = useMediaGestures({
@@ -37,56 +40,54 @@ export function ContentStage() {
     resetKey: current?.id,
     canPrev: index > 0,
     canNext: index < items.length - 1,
+    align,
     onSwipe: go,
     onTap: () => {
-      if (!video) return;
-      if (video.paused) void video.play();
-      else video.pause();
+      if (video) togglePlay(video);
     },
   });
 
-  // Камера на весь экран: эталон скрыт — ставим видео на паузу.
+  // Эталон не виден (камера на весь экран без наложения, «две камеры» без наложения) — пауза.
   useEffect(() => {
-    if (hidden) video?.pause();
-  }, [hidden, video]);
+    if (!visible) video?.pause();
+  }, [visible, video]);
+
+  useEffect(() => {
+    if (!video) return;
+    const apply = () => applySpeed(video, speed);
+    apply();
+    video.addEventListener('loadedmetadata', apply);
+    return () => video.removeEventListener('loadedmetadata', apply);
+  }, [video, speed]);
 
   if (!current) return null;
-  // Пока ref не обновился, `video` может указывать на элемент прошлого слайда.
-  const currentVideo = video?.dataset.item === current.id ? video : null;
 
   return (
-    <>
-      <div className="stage" ref={stageRef} {...gestures}>
-        <div className="strip" ref={stripRef}>
-          <div className="cell">
-            <Preview item={items[index - 1]} />
-          </div>
-          <div className="cell">
-            <div className="zoom-layer" ref={zoomRef} key={current.id} data-mirror={mirror || undefined}>
-              {current.kind === 'video' ? (
-                <video
-                  ref={videoRef}
-                  className="media"
-                  data-item={current.id}
-                  src={mediaUrl(current)}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  disablePictureInPicture
-                />
-              ) : (
-                <img className="media" src={mediaUrl(current)} alt={current.name} draggable={false} />
-              )}
-            </div>
-          </div>
-          <div className="cell">
-            <Preview item={items[index + 1]} />
+    <div className="stage" ref={stageRef} {...gestures}>
+      <div className="strip" ref={stripRef}>
+        <div className="cell">{!align && <Preview item={items[index - 1]} />}</div>
+        <div className="cell">
+          <div className="zoom-layer" ref={zoomRef} key={current.id} data-mirror={mirror || undefined}>
+            {current.kind === 'video' ? (
+              <video
+                ref={videoRef}
+                className="media"
+                data-item={current.id}
+                src={mediaUrl(current)}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                disablePictureInPicture
+              />
+            ) : (
+              <img className="media" src={mediaUrl(current)} alt={current.name} draggable={false} />
+            )}
           </div>
         </div>
+        <div className="cell">{!align && <Preview item={items[index + 1]} />}</div>
       </div>
-      {currentVideo && <VideoControls key={current.id} video={currentVideo} />}
-    </>
+    </div>
   );
 }

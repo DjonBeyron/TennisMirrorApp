@@ -23,6 +23,12 @@
   background: var(--surface-2);
 }
 
+/* Недоступно (например, «следующий» на последнем эталоне). */
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* Включённый переключатель (например, «зеркало») — иконка акцентного цвета. */
 .icon-btn[aria-pressed='true'] {
   color: var(--accent);

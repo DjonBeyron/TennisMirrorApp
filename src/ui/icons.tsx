@@ -145,3 +145,51 @@ export function TrashIcon() {
     </svg>
   );
 }
+
+/** Две камеры: экран, разделённый пополам, в каждой половине объектив. */
+export function DualIcon() {
+  return (
+    <svg {...stroke}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M12 5v14" />
+      <circle cx="7" cy="12" r="2" />
+      <circle cx="17" cy="12" r="2" />
+    </svg>
+  );
+}
+
+/** Наложение: два слоя, верхний полупрозрачный. */
+export function LayersIcon() {
+  return (
+    <svg {...stroke}>
+      <rect x="3" y="3" width="13" height="13" rx="2" />
+      <rect x="8" y="8" width="13" height="13" rx="2" fill="currentColor" fillOpacity={0.35} />
+    </svg>
+  );
+}
+
+/** Прозрачность: наполовину закрашенный круг. */
+export function OpacityIcon() {
+  return (
+    <svg {...stroke}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function ChevronLeftIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M15 5l-7 7 7 7" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon() {
+  return (
+    <svg {...stroke}>
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}

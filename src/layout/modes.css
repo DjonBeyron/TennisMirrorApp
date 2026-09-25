@@ -1,0 +1,53 @@
+/*
+ * Режимы экрана (data-mode на .app): split — камера и эталон рядом; dual — камера в обеих половинах;
+ * camera — камера на весь экран. data-overlay — эталон поверх камеры (в dual и на весь экран).
+ * DOM один и тот же во всех режимах — видео не пересоздаются, режимы меняют только стили.
+ */
+
+/*
+ * На весь экран обе панели лежат друг на друге без собственных слоёв (без z-index и container-type):
+ * тогда слои панелей перемешиваются — видео камеры внизу, эталон над ним, кнопки камеры сверху.
+ */
+.app[data-mode='camera'] .panel {
+  position: absolute;
+  inset: 0;
+  container-type: normal;
+}
+
+.app[data-mode='camera'] .divider {
+  visibility: hidden;
+}
+
+.app[data-mode='camera'] .panel-content {
+  background: transparent;
+}
+
+.app[data-mode='camera']:not([data-overlay]) .panel-content {
+  visibility: hidden;
+}
+
+/* Свои кнопки эталона на весь экран не показываем: управление наложением — в панели камеры. */
+.app[data-mode='camera'] .panel-content .hud,
+.app[data-mode='camera'] .content-empty {
+  display: none;
+}
+
+/* Эталон над видео камеры и её слоем щипка (z-index 1), но под кнопками (z-index 3). */
+.app[data-mode='camera'] .stage {
+  z-index: 2;
+}
+
+/* Наложенный эталон полупрозрачный; прозрачность — ползунком (--overlay-opacity на корне документа). */
+.app[data-overlay]:is([data-mode='camera'], [data-mode='dual']) .stage {
+  opacity: var(--overlay-opacity, 0.5);
+}
+
+/* «Две камеры» без наложения: во второй половине только камера. */
+.app[data-mode='dual']:not([data-overlay]) .stage {
+  visibility: hidden;
+}
+
+/* В панели эталона ползунок прозрачности во всю ширину, как управление видео под ним. */
+.panel-content .overlay-controls {
+  align-self: stretch;
+}

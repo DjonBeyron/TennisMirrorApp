@@ -11,6 +11,9 @@ interface ContentState {
   index: number;
   loaded: boolean;
   speed: number;
+  /** Элемент <video> текущего эталона: им управляют и панель эталона, и панель камеры при наложении. */
+  video: HTMLVideoElement | null;
+  setVideo: (video: HTMLVideoElement | null) => void;
   load: () => Promise<void>;
   add: (files: File[]) => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -23,6 +26,8 @@ export const useContent = create<ContentState>()((set, get) => ({
   index: 0,
   loaded: false,
   speed: 1,
+  video: null,
+  setVideo: (video) => set({ video }),
 
   async load() {
     if (get().loaded) return;
@@ -58,3 +63,11 @@ export const useContent = create<ContentState>()((set, get) => ({
     set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] }));
   },
 }));
+
+type Content = Pick<ContentState, 'items' | 'index' | 'video'>;
+
+export const selectCurrent = (s: Content): MediaItem | undefined => s.items[s.index];
+
+/** Видео текущего слайда. Пока ref не обновился, в store может лежать элемент прошлого слайда. */
+export const selectCurrentVideo = (s: Content) =>
+  s.video && s.video.dataset.item === selectCurrent(s)?.id ? s.video : null;

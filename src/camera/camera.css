@@ -7,7 +7,7 @@
   object-fit: contain;
 }
 
-.panel-camera[data-fit='cover'] .camera-video {
+.camera-video[data-fit='cover'] {
   object-fit: cover;
 }
 
@@ -37,18 +37,13 @@
   text-align: center;
 }
 
-/* Зум внизу панели; отступ под полоску «Домой» — только если панель касается низа экрана (--safe-b). */
+/* Зум — в нижней полосе панели камеры (.panel-bottom), под управлением наложением. */
 .zoom-bar {
-  position: absolute;
-  z-index: 3;
-  bottom: max(10px, var(--safe-b));
-  left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  max-width: calc(100% - 16px);
-  transform: translateX(-50%);
+  max-width: 100%;
 }
 
 .zoom-value {

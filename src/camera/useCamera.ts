@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useCameraStream } from '../store/camera';
 import type { Facing } from '../store/ui';
 
 /** Разрешение и частота кадров; при applyConstraints их нужно передавать снова, иначе они сбросятся. */
@@ -72,6 +73,7 @@ export function useCamera(facing: Facing) {
           video.play().catch(() => {});
         }
         setState({ status: 'live', track: opened.getVideoTracks()[0] ?? null, error: null });
+        useCameraStream.setState({ stream: opened });
       },
       (e: unknown) => {
         if (!cancelled) setState({ status: 'error', track: null, error: describeError(e) });
@@ -81,6 +83,7 @@ export function useCamera(facing: Facing) {
     return () => {
       cancelled = true;
       if (stream) stop(stream);
+      useCameraStream.setState({ stream: null });
       if (video) video.srcObject = null;
       setState(STARTING);
     };

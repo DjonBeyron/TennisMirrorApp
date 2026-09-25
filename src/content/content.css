@@ -66,14 +66,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Внизу панели; отступы под вырезы — только у краёв экрана, которых панель касается (--safe-*). */
+/* В нижней полосе панели эталона (.panel-bottom), во всю её ширину. */
 .video-controls {
-  position: absolute;
-  z-index: 3;
-  right: max(8px, var(--safe-r));
-  bottom: max(10px, var(--safe-b));
-  left: max(8px, var(--safe-l));
   display: flex;
+  align-self: stretch;
   flex-direction: column;
   gap: 4px;
   padding: 4px 10px 6px;

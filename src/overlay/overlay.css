@@ -1,0 +1,47 @@
+/* Плашка управления наложением: прозрачность и (на весь экран) ‹ ▶ › и зеркало. */
+.overlay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px var(--btn-gap);
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--hud-bg);
+}
+
+.opacity-slider {
+  display: flex;
+  flex: 1 1 160px;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  color: var(--text);
+}
+
+.opacity-slider svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.opacity-slider input {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--accent);
+}
+
+.opacity-value {
+  min-width: 28px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Кнопки на подложке — без своей обводки. */
+.overlay-buttons .icon-btn {
+  border-color: transparent;
+  background: transparent;
+}

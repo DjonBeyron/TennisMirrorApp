@@ -1,11 +1,11 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useContent } from '../store/content';
 import { IconButton } from '../ui/IconButton';
 import { PauseIcon, PlayIcon, StepBackIcon, StepForwardIcon } from '../ui/icons';
+import { seek, togglePlay, useVideoState } from './video';
 
 /** Шаг «кадр назад/вперёд»: частоту кадров файла браузер не сообщает, берём типичные 30 к/с. */
 const FRAME_S = 1 / 30;
-const EVENTS = ['play', 'pause', 'timeupdate', 'loadedmetadata', 'durationchange', 'seeked'] as const;
 
 function formatTime(t: number): string {
   if (!Number.isFinite(t)) return '0:00.0';
@@ -15,47 +15,13 @@ function formatTime(t: number): string {
 
 const formatSpeed = (speed: number) => `${speed}×`;
 
-// Видео меняем через функции вне компонента: линтер React не разрешает менять props напрямую.
-
-/** Скорость выставляем и как текущую, и как «по умолчанию»: загрузка файла сбрасывает текущую. */
-function applySpeed(video: HTMLVideoElement, speed: number) {
-  video.defaultPlaybackRate = speed;
-  video.playbackRate = speed;
-}
-
-function seek(video: HTMLVideoElement, time: number) {
-  video.currentTime = Math.min(video.duration || 0, Math.max(0, time));
-}
-
 /** Пауза, кадр назад/вперёд, скорость и перемотка для текущего видео эталона. */
 export function VideoControls({ video }: { video: HTMLVideoElement }) {
   const speed = useContent((s) => s.speed);
   const cycleSpeed = useContent((s) => s.cycleSpeed);
-  const [paused, setPaused] = useState(video.paused);
-  const [time, setTime] = useState(video.currentTime);
-  const [duration, setDuration] = useState(video.duration || 0);
-
-  useEffect(() => {
-    const sync = () => {
-      setPaused(video.paused);
-      setTime(video.currentTime);
-      setDuration(video.duration || 0);
-    };
-    EVENTS.forEach((name) => video.addEventListener(name, sync));
-    return () => EVENTS.forEach((name) => video.removeEventListener(name, sync));
-  }, [video]);
-
-  useEffect(() => {
-    const apply = () => applySpeed(video, speed);
-    apply();
-    video.addEventListener('loadedmetadata', apply);
-    return () => video.removeEventListener('loadedmetadata', apply);
-  }, [video, speed]);
-
-  function togglePlay() {
-    if (video.paused) void video.play();
-    else video.pause();
-  }
+  const { paused, time, duration } = useVideoState(video);
+  // Пока тянем ползунок, показываем его значение: событие seeked приходит с задержкой.
+  const [dragTime, setDragTime] = useState<number | null>(null);
 
   function step(delta: number) {
     video.pause();
@@ -64,14 +30,17 @@ export function VideoControls({ video }: { video: HTMLVideoElement }) {
 
   function scrub(e: ChangeEvent<HTMLInputElement>) {
     const t = Number(e.target.value);
+    setDragTime(t);
     seek(video, t);
-    setTime(t);
   }
 
+  const shown = dragTime ?? time;
+  const endDrag = () => setDragTime(null);
+
   return (
-    <div className="video-controls hud">
+    <div className="video-controls">
       <div className="vc-scrub-row">
-        <span className="vc-time">{formatTime(time)}</span>
+        <span className="vc-time">{formatTime(shown)}</span>
         <input
           type="range"
           className="vc-scrub"
@@ -79,8 +48,11 @@ export function VideoControls({ video }: { video: HTMLVideoElement }) {
           min={0}
           max={duration}
           step={0.01}
-          value={Math.min(time, duration)}
+          value={Math.min(shown, duration)}
           onChange={scrub}
+          onPointerUp={endDrag}
+          onKeyUp={endDrag}
+          onBlur={endDrag}
         />
         <span className="vc-time">{formatTime(duration)}</span>
       </div>
@@ -88,7 +60,7 @@ export function VideoControls({ video }: { video: HTMLVideoElement }) {
         <IconButton label="Кадр назад" onClick={() => step(-FRAME_S)}>
           <StepBackIcon />
         </IconButton>
-        <IconButton label={paused ? 'Воспроизвести' : 'Пауза'} onClick={togglePlay}>
+        <IconButton label={paused ? 'Воспроизвести' : 'Пауза'} onClick={() => togglePlay(video)}>
           {paused ? <PlayIcon /> : <PauseIcon />}
         </IconButton>
         <IconButton label="Кадр вперёд" onClick={() => step(FRAME_S)}>

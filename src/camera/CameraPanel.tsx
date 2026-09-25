@@ -1,4 +1,5 @@
 import { GlobalTools, HudRestore } from '../layout/Hud';
+import { OverlayControls } from '../overlay/OverlayControls';
 import { useWakeLock } from '../platform/wakeLock';
 import { useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
@@ -17,14 +18,19 @@ export function CameraPanel() {
   const { videoRef, status, track, error, retry } = useCamera(facing);
   useWakeLock(status === 'live');
 
+  // Эталон поверх камеры на весь экран — его управление стоит в нижней полосе этой панели.
+  const overlayHere = useUi((s) => s.fullscreen && s.overlay);
+  const overlayControls = overlayHere ? <OverlayControls full /> : null;
+
   // Фронтальная камера в превью зеркальна, как настоящее зеркало. Запись зеркалом не затрагивается.
   const mirror = (track?.getSettings().facingMode ?? facing) === 'user';
 
   return (
-    <section className="panel panel-camera" aria-label="Камера" data-fit={fit}>
+    <section className="panel panel-camera" aria-label="Камера">
       <video
         ref={videoRef}
         className="camera-video"
+        data-fit={fit}
         data-mirror={mirror || undefined}
         autoPlay
         muted
@@ -43,7 +49,13 @@ export function CameraPanel() {
         </div>
       )}
 
-      {track && <ZoomLayer key={track.id} track={track} />}
+      {track ? (
+        <ZoomLayer key={track.id} track={track}>
+          {overlayControls}
+        </ZoomLayer>
+      ) : (
+        <div className="panel-bottom hud">{overlayControls}</div>
+      )}
 
       <div className="panel-bar hud">
         <div className="tool-group">
