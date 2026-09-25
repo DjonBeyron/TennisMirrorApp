@@ -1,12 +1,13 @@
 import { useEffect, useRef, type ChangeEvent } from 'react';
 import { CameraMirror } from '../camera/CameraMirror';
-import { HideButton, HudRestore, SoloButton } from '../layout/Hud';
+import { HideButton, HudRestore, OtherSpaceButton, SpacesSwitch } from '../layout/Hud';
 import { OverlayControls } from '../overlay/OverlayControls';
 import { shareOrDownload } from '../platform/share';
 import { selectCount, selectCurrent, selectCurrentVideo, selectIndex, useContent } from '../store/content';
 import { selectCameraInContent, selectContentVisible, selectOverlayActive, useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { LayersIcon, MirrorIcon, PlusIcon, ShareIcon, TrashIcon } from '../ui/icons';
+import { ContentNav } from './ContentNav';
 import { ContentStage } from './ContentStage';
 import { PackSwitch } from './PackSwitch';
 import { VideoControls } from './VideoControls';
@@ -67,6 +68,7 @@ export function ContentPanel() {
     <section className="panel panel-content" aria-label="Эталон">
       {dual && <CameraMirror />}
       {count > 0 && <ContentStage />}
+      {visible && <ContentNav />}
       {count === 0 && loaded && split && (
         <div className="content-empty">
           {empty}
@@ -114,7 +116,8 @@ export function ContentPanel() {
               <LayersIcon />
             </IconButton>
           )}
-          <SoloButton space="content" />
+          {solo && <OtherSpaceButton to="camera" />}
+          <SpacesSwitch space="content" />
           {solo && <HideButton />}
         </div>
       </div>

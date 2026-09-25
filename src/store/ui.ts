@@ -37,8 +37,8 @@ interface UiState {
   setOverlayOpacity: (opacity: number) => void;
   toggleSwapped: () => void;
   toggleDual: () => void;
-  /** Показать только эту часть или вернуть обе. */
-  toggleSolo: (space: Space) => void;
+  /** Одна часть на весь экран (camera | content) или обе (null). */
+  setSolo: (solo: Space | null) => void;
   toggleOverlay: () => void;
   toggleHud: () => void;
   toggleFacing: () => void;
@@ -65,7 +65,7 @@ export const useUi = create<UiState>()(
       setOverlayOpacity: (opacity) => set({ overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, opacity)) }),
       toggleSwapped: () => set((s) => ({ swapped: !s.swapped })),
       toggleDual: () => set((s) => ({ layout: s.layout === 'dual' ? 'split' : 'dual' })),
-      toggleSolo: (space) => set((s) => ({ solo: s.solo === space ? null : space })),
+      setSolo: (solo) => set({ solo }),
       toggleOverlay: () => set((s) => ({ overlay: !s.overlay })),
       toggleHud: () => set((s) => ({ hud: !s.hud })),
       toggleFacing: () => set((s) => ({ facing: s.facing === 'user' ? 'environment' : 'user' })),

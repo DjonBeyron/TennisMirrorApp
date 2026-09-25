@@ -1,25 +1,55 @@
 import { enterFullscreen, exitFullscreen } from '../platform/fullscreen';
 import { useUi, type Space } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
-import { CollapseIcon, DualIcon, ExpandIcon, EyeIcon, EyeOffIcon, LayersIcon, SwapIcon } from '../ui/icons';
+import { DualIcon, EyeIcon, EyeOffIcon, LayersIcon, SwapIcon } from '../ui/icons';
 
 /**
- * «Только эта часть» / «показать обе». Есть в полосе кнопок каждой части: любую можно развернуть
- * на весь экран, вторая при этом скрывается, но не пересоздаётся.
+ * «1 | 2» — сколько частей экрана показывать. Стоит в полосе каждой части: «1» оставляет на экране
+ * только её, «2» возвращает обе. Скрытая часть не пересоздаётся (камера не перезапускается).
  */
-export function SoloButton({ space }: { space: Space }) {
-  const solo = useUi((s) => s.solo === space);
-  const toggleSolo = useUi((s) => s.toggleSolo);
+export function SpacesSwitch({ space }: { space: Space }) {
+  const solo = useUi((s) => s.solo);
+  const setSolo = useUi((s) => s.setSolo);
 
-  function onClick() {
-    if (solo) exitFullscreen();
-    else enterFullscreen();
-    toggleSolo(space);
+  function show(next: Space | null) {
+    if (next === solo) return;
+    if (next) enterFullscreen();
+    else exitFullscreen();
+    setSolo(next);
   }
 
   return (
-    <IconButton label={solo ? 'Показать обе части' : 'Только эта часть'} onClick={onClick}>
-      {solo ? <CollapseIcon /> : <ExpandIcon />}
+    <div className="seg" role="radiogroup" aria-label="Сколько частей показывать">
+      <button
+        type="button"
+        role="radio"
+        aria-checked={solo === space}
+        aria-label="Одна часть — только эта"
+        title="Только эта часть"
+        onClick={() => show(space)}
+      >
+        1
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={solo === null}
+        aria-label="Две части"
+        title="Обе части"
+        onClick={() => show(null)}
+      >
+        2
+      </button>
+    </div>
+  );
+}
+
+/** Когда на экране одна часть: показать вместо неё другую. */
+export function OtherSpaceButton({ to }: { to: Space }) {
+  const setSolo = useUi((s) => s.setSolo);
+  return (
+    <IconButton label="Показать другую часть" onClick={() => setSolo(to)}>
+      <SwapIcon className="rotate-landscape" />
     </IconButton>
   );
 }
@@ -33,7 +63,10 @@ export function HideButton() {
   );
 }
 
-/** Кнопки раскладки в полосе камеры: поменять местами, две камеры / наложение, эта часть, скрыть. */
+/**
+ * Кнопки раскладки в полосе камеры: поменять местами (или показать другую часть), две камеры /
+ * наложение, «1 | 2», скрыть.
+ */
 export function GlobalTools() {
   const cameraSolo = useUi((s) => s.solo === 'camera');
   const dual = useUi((s) => s.layout === 'dual');
@@ -44,7 +77,9 @@ export function GlobalTools() {
 
   return (
     <div className="tool-group">
-      {!cameraSolo && (
+      {cameraSolo ? (
+        <OtherSpaceButton to="content" />
+      ) : (
         <IconButton label="Поменять местами части" onClick={toggleSwapped}>
           <SwapIcon className="rotate-landscape" />
         </IconButton>
@@ -59,7 +94,7 @@ export function GlobalTools() {
           <LayersIcon />
         </IconButton>
       )}
-      <SoloButton space="camera" />
+      <SpacesSwitch space="camera" />
       <HideButton />
     </div>
   );

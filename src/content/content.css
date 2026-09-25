@@ -148,3 +148,26 @@
   position: absolute;
   inset: -6px;
 }
+
+/* ‹ › у краёв второй части — по середине высоты, между верхней и нижней полосами кнопок. */
+.icon-btn.content-nav {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.content-nav-prev {
+  left: max(4px, var(--safe-l));
+}
+
+.content-nav-next {
+  right: max(4px, var(--safe-r));
+}
+
+/* Низкая или совсем узкая панель: посередине места нет (полосы кнопок сверху и снизу) — листать свайпом. */
+@container (max-height: 200px) or (max-width: 160px) {
+  .icon-btn.content-nav {
+    display: none;
+  }
+}

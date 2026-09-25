@@ -27,7 +27,9 @@
   visibility: hidden;
 }
 
-.app[data-solo='camera'] .panel-content .hud,
+/* Полосы кнопок эталона прячем (на их местах — полосы камеры), а ‹ › у краёв оставляем: они посередине. */
+.app[data-solo='camera'] .panel-content .panel-bar,
+.app[data-solo='camera'] .panel-content .panel-bottom,
 .app[data-solo='camera'] .panel-content .hud-restore,
 .app[data-solo='camera'] .content-empty {
   display: none;
