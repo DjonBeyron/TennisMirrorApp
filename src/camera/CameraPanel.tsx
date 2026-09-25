@@ -1,7 +1,9 @@
+import { GlobalTools, HudRestore } from '../layout/Hud';
 import { useWakeLock } from '../platform/wakeLock';
 import { useUi } from '../store/ui';
 import { IconButton } from '../ui/IconButton';
 import { FitContainIcon, FitCoverIcon, FlipCameraIcon } from '../ui/icons';
+import { Version } from '../ui/Version';
 import { useCamera } from './useCamera';
 import { ZoomLayer } from './ZoomLayer';
 import './camera.css';
@@ -43,14 +45,19 @@ export function CameraPanel() {
 
       {track && <ZoomLayer key={track.id} track={track} />}
 
-      <div className="camera-tools hud">
-        <IconButton label="Переключить камеру" onClick={toggleFacing}>
-          <FlipCameraIcon />
-        </IconButton>
-        <IconButton label={fit === 'contain' ? 'Кадр на всю панель' : 'Кадр целиком'} onClick={toggleFit}>
-          {fit === 'contain' ? <FitCoverIcon /> : <FitContainIcon />}
-        </IconButton>
+      <div className="panel-bar hud">
+        <div className="tool-group">
+          <IconButton label="Переключить камеру" onClick={toggleFacing}>
+            <FlipCameraIcon />
+          </IconButton>
+          <IconButton label={fit === 'contain' ? 'Кадр на всю панель' : 'Кадр целиком'} onClick={toggleFit}>
+            {fit === 'contain' ? <FitCoverIcon /> : <FitContainIcon />}
+          </IconButton>
+        </div>
+        <GlobalTools />
       </div>
+      <HudRestore />
+      <Version />
     </section>
   );
 }

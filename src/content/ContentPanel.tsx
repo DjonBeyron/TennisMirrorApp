@@ -42,19 +42,21 @@ export function ContentPanel() {
       {count > 0 ? (
         <>
           <ContentStage />
-          <div className="content-tools hud">
-            <IconButton label="Добавить видео или фото" onClick={pickFiles}>
-              <PlusIcon />
-            </IconButton>
-            <IconButton label="Отразить эталон" aria-pressed={mirror} onClick={toggleMirror}>
-              <MirrorIcon />
-            </IconButton>
-            <IconButton label="Удалить из приложения" onClick={onDelete}>
-              <TrashIcon />
-            </IconButton>
-            <span className="content-counter">
-              {index + 1} / {count}
-            </span>
+          <div className="panel-bar hud">
+            <div className="tool-group">
+              <IconButton label="Добавить видео или фото" onClick={pickFiles}>
+                <PlusIcon />
+              </IconButton>
+              <IconButton label="Отразить эталон" aria-pressed={mirror} onClick={toggleMirror}>
+                <MirrorIcon />
+              </IconButton>
+              <IconButton label="Удалить из приложения" onClick={onDelete}>
+                <TrashIcon />
+              </IconButton>
+              <span className="content-counter">
+                {index + 1} / {count}
+              </span>
+            </div>
           </div>
         </>
       ) : (

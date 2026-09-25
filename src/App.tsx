@@ -2,9 +2,7 @@ import type { CSSProperties } from 'react';
 import { CameraPanel } from './camera/CameraPanel';
 import { ContentPanel } from './content/ContentPanel';
 import { Divider } from './layout/Divider';
-import { Hud } from './layout/Hud';
 import { useUi } from './store/ui';
-import { Version } from './ui/Version';
 import './layout/layout.css';
 
 export function App() {
@@ -23,8 +21,6 @@ export function App() {
       <CameraPanel />
       <Divider />
       <ContentPanel />
-      <Hud />
-      <Version />
     </div>
   );
 }

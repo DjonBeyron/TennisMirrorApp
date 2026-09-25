@@ -1,4 +1,5 @@
 .icon-btn {
+  position: relative;
   display: grid;
   width: var(--btn);
   height: var(--btn);
@@ -11,6 +12,13 @@
   cursor: pointer;
 }
 
+/* Кнопка маленькая, но попадать пальцем удобно: невидимая зона нажатия шире на 6 px с каждой стороны. */
+.icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
 .icon-btn:active {
   background: var(--surface-2);
 }
@@ -20,32 +28,30 @@
   color: var(--accent);
 }
 
-/* 60 %: при 50 % мелкие детали иконок сливались на экране телефона. */
 .icon-btn svg {
-  width: 60%;
-  height: 60%;
+  width: 66%;
+  height: 66%;
 }
 
 .text-btn {
-  min-height: 44px;
-  padding: 0 20px;
+  min-height: 40px;
+  padding: 0 18px;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: 20px;
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
 }
 
-/* Сверху по центру экрана: углы заняты кнопками, низ — управлением видео. */
+/* В левом нижнем углу панели камеры: верх занят кнопками, низ по центру — зумом. */
 .version {
-  position: fixed;
-  z-index: 10;
-  top: max(2px, env(safe-area-inset-top));
-  left: 50%;
+  position: absolute;
+  z-index: 3;
+  bottom: max(6px, var(--safe-b));
+  left: max(8px, var(--safe-l));
   color: var(--text-dim);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
-  transform: translateX(-50%);
   pointer-events: none;
 }
 

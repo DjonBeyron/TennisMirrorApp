@@ -26,11 +26,13 @@
   }
 }
 
+/* Панель — контейнер для @container: узкая или низкая панель прячет второстепенное. */
 .panel {
   position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  container-type: size;
 }
 
 .panel-camera {
@@ -103,14 +105,91 @@
   visibility: hidden;
 }
 
-/* Общие кнопки в правом верхнем углу, с учётом выреза и скруглений. */
-.top-bar {
-  position: fixed;
-  z-index: 10;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(8px, env(safe-area-inset-right));
+/*
+ * Отступы под вырез, скругления и полоску «Домой» — только у тех краёв экрана, которых панель касается.
+ * Кнопки внутри панели считают отступы от --safe-*, поэтому не залезают в соседнюю зону.
+ */
+.panel {
+  --safe-t: 0px;
+  --safe-r: 0px;
+  --safe-b: 0px;
+  --safe-l: 0px;
+}
+
+@media (orientation: portrait) {
+  .panel {
+    --safe-r: env(safe-area-inset-right);
+    --safe-l: env(safe-area-inset-left);
+  }
+
+  .app:not([data-swapped]) .panel-camera,
+  .app[data-swapped] .panel-content {
+    --safe-t: env(safe-area-inset-top);
+  }
+
+  .app:not([data-swapped]) .panel-content,
+  .app[data-swapped] .panel-camera {
+    --safe-b: env(safe-area-inset-bottom);
+  }
+}
+
+@media (orientation: landscape) {
+  .panel {
+    --safe-t: env(safe-area-inset-top);
+    --safe-b: env(safe-area-inset-bottom);
+  }
+
+  .app:not([data-swapped]) .panel-camera,
+  .app[data-swapped] .panel-content {
+    --safe-l: env(safe-area-inset-left);
+  }
+
+  .app:not([data-swapped]) .panel-content,
+  .app[data-swapped] .panel-camera {
+    --safe-r: env(safe-area-inset-right);
+  }
+}
+
+/* На весь экран камера касается всех краёв. Правило ниже ориентационных — перекрывает их. */
+.app[data-mode='camera'] .panel-camera {
+  --safe-t: env(safe-area-inset-top);
+  --safe-r: env(safe-area-inset-right);
+  --safe-b: env(safe-area-inset-bottom);
+  --safe-l: env(safe-area-inset-left);
+}
+
+/*
+ * Верхняя полоса кнопок панели: группа слева и группа справа. Если панель узкая, правая группа
+ * переносится строкой ниже, но остаётся в своей панели. Пустое место полосы жесты не перехватывает.
+ */
+.panel-bar {
+  position: absolute;
+  z-index: 3;
+  top: max(8px, var(--safe-t));
+  right: max(8px, var(--safe-r));
+  left: max(8px, var(--safe-l));
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--btn-gap);
+  pointer-events: none;
+}
+
+/* Группа может сжаться до ширины панели — тогда кнопки переносятся строкой ниже. */
+.tool-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--btn-gap);
+  min-width: 0;
+  pointer-events: auto;
+}
+
+/* Правая группа остаётся у правого края, даже когда перенеслась на свою строку. */
+.tool-group + .tool-group {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 /* Скрытый HUD: все элементы с классом .hud прячутся, остаётся кнопка «Показать». */
@@ -120,10 +199,10 @@
 }
 
 .icon-btn.hud-restore {
-  position: fixed;
-  z-index: 10;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(8px, env(safe-area-inset-right));
+  position: absolute;
+  z-index: 3;
+  top: max(8px, var(--safe-t));
+  right: max(8px, var(--safe-r));
   display: none;
   opacity: 0.4;
 }

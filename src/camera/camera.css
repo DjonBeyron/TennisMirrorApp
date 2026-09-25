@@ -37,68 +37,67 @@
   text-align: center;
 }
 
-.camera-tools {
-  position: absolute;
-  z-index: 3;
-  top: max(8px, env(safe-area-inset-top));
-  left: max(8px, env(safe-area-inset-left));
-  display: flex;
-  gap: 8px;
-}
-
-/* Зум внизу панели. Отступ под полоску «Домой» нужен, только когда панель касается низа экрана. */
+/* Зум внизу панели; отступ под полоску «Домой» — только если панель касается низа экрана (--safe-b). */
 .zoom-bar {
   position: absolute;
   z-index: 3;
-  bottom: 12px;
+  bottom: max(10px, var(--safe-b));
   left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  max-width: calc(100% - 16px);
   transform: translateX(-50%);
 }
 
-.app[data-swapped] .zoom-bar,
-.app[data-mode='camera'] .zoom-bar {
-  bottom: max(12px, env(safe-area-inset-bottom));
-}
-
-@media (orientation: landscape) {
-  .zoom-bar {
-    bottom: max(12px, env(safe-area-inset-bottom));
-  }
-}
-
 .zoom-value {
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
   background: var(--hud-bg);
   color: var(--text);
-  font-size: 12px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
+/* В узкой панели чипы переносятся строкой ниже, а не вылезают за край. */
 .zoom-presets {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
+  padding: 2px;
+  border-radius: 14px;
   background: var(--hud-bg);
 }
 
+/* Узкая или низкая панель камеры: версия уступает место зуму. */
+@container (max-width: 280px) or (max-height: 160px) {
+  .version {
+    display: none;
+  }
+}
+
 .zoom-chip {
-  min-width: 44px;
-  height: 36px;
-  padding: 0 8px;
+  position: relative;
+  min-width: 30px;
+  height: var(--btn);
+  padding: 0 5px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--text);
   font:
-    600 13px system-ui,
+    500 11px system-ui,
     sans-serif;
   font-variant-numeric: tabular-nums;
+}
+
+/* Невидимая зона нажатия выше самого чипа; по бокам соседи вплотную — там не расширяем. */
+.zoom-chip::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
 }
 
 .zoom-chip[data-active] {

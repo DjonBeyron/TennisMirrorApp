@@ -22,6 +22,10 @@ PWA на React + TypeScript + Vite для тренировки техники н
    во время движения пишут в `style`/CSS-переменные через ref в `requestAnimationFrame`.
    В store попадает только итоговое значение.
 7. **Portrait/landscape и swap — только CSS** (`@media (orientation: landscape)`, `flex-direction`), не JS.
+   **Каждая кнопка живёт внутри своей панели** (`.panel-bar` → `.tool-group`, `position: absolute` в панели),
+   ничего не прибивать `position: fixed` к экрану. Отступы под вырезы — только через `--safe-t/r/b/l` панели
+   (они учитывают, каких краёв экрана панель касается); `env(safe-area-inset-*)` в компонентах напрямую не писать.
+   Узкие и низкие панели — через `@container` (панель — контейнер). Размеры кнопок — `--btn`, `--btn-gap`.
 8. **Возможности платформы — через проверку поддержки** (`'zoom' in caps`, `MediaRecorder.isTypeSupported`),
    никогда через user agent.
 9. **Зум камеры — только нативный** (`zoom`-констрейнт трека или переключение объективов).
