@@ -16,19 +16,6 @@
   flex-direction: column-reverse;
 }
 
-/*
- * iOS в установленной PWA (viewport-fit=cover + black-translucent) вычитает высоту строки состояния
- * из inset: 0, 100% и 100dvh — снизу остаётся пустая полоса. 100lvh (= 100vh) — весь экран.
- * Только для установленного приложения: в Safari с панелями нужен обычный inset: 0.
- */
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  .app {
-    bottom: auto;
-    height: 100vh;
-    height: 100lvh;
-  }
-}
-
 @media (orientation: landscape) {
   .app {
     flex-direction: row;
@@ -124,6 +111,16 @@
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.viewport-info {
+  margin: 0;
+  font:
+    11px/1.5 ui-monospace,
+    monospace;
+  letter-spacing: normal;
+  text-align: center;
+  text-transform: none;
 }
 
 .placeholder a {

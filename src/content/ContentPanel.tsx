@@ -1,3 +1,5 @@
+import { ViewportInfo } from '../debug/ViewportInfo';
+
 // Этап 1: заглушка. Карусель видео и фото появится на этапе 3.
 export function ContentPanel() {
   return (
@@ -5,6 +7,7 @@ export function ContentPanel() {
       <div className="placeholder">
         Контент
         <a href="/probe.html">Проверка камеры</a>
+        <ViewportInfo />
       </div>
     </section>
   );

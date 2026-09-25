@@ -1,7 +1,7 @@
 {
   "name": "tennis-mirror",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "check:lines": "node scripts/check-lines.mjs",
     "icons": "node scripts/make-icons.mjs",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "node scripts/setup-hooks.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

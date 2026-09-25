@@ -426,7 +426,8 @@ if (bad.length) {
 | Риск | Что делаем |
 |---|---|
 | iOS: видео не играет инлайн | `playsinline muted` везде |
-| iOS: `100vh` врёт, вырез экрана | `100dvh`, `viewport-fit=cover`, `env(safe-area-inset-*)` |
+| iOS: `100vh` врёт, вырез экрана | корень `position: fixed; inset: 0`, `viewport-fit=cover`, `env(safe-area-inset-*)` |
+| iOS PWA с прозрачной строкой состояния не доходит до низа экрана | строка состояния `black` (не `black-translucent`); диагностика размеров на главном экране |
 | iOS: системный зум страницы мешает щипку | `touch-action` на зонах жестов + `preventDefault` на `gesturestart` |
 | iOS: нет `screen.orientation.lock` | ориентация только через CSS, в manifest `orientation: any` |
 | iOS PWA повторно спрашивает камеру | поведение системы; не останавливать поток без нужды (только в фоне) |
