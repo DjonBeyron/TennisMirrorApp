@@ -52,11 +52,13 @@ export function EyeIcon() {
   );
 }
 
+/** Фотоаппарат со стрелкой поворота сверху: крупные детали, читается и в кнопке 44 px. */
 export function FlipCameraIcon() {
   return (
     <svg {...stroke}>
-      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-      <path d="M9.5 13.5a2.5 2.5 0 0 1 4.3-1.8M14.5 13.5a2.5 2.5 0 0 1-4.3 1.8M14 10.5v1.5h-1.5M10 16.5V15h1.5" />
+      <path d="M3 10a2 2 0 0 1 2-2h2l1.5-2h7L17 8h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="14" r="3" />
+      <path d="M7 4.5a7 7 0 0 1 10 0M17 4.5V2M17 4.5h-2.5" />
     </svg>
   );
 }

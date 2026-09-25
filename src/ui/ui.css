@@ -15,9 +15,10 @@
   background: var(--surface-2);
 }
 
+/* 60 %: при 50 % мелкие детали иконок сливались на экране телефона. */
 .icon-btn svg {
-  width: 50%;
-  height: 50%;
+  width: 60%;
+  height: 60%;
 }
 
 .version {
