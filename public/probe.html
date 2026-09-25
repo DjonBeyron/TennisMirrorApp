@@ -11,7 +11,8 @@
       }
       body {
         margin: 0;
-        padding: 8px max(8px, env(safe-area-inset-right)) 24px max(8px, env(safe-area-inset-left));
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 24px
+          max(8px, env(safe-area-inset-left));
         background: #000;
         color: #fff;
         font:
@@ -46,6 +47,11 @@
       input[type='range'] {
         flex: 1;
       }
+      a {
+        display: inline-block;
+        padding: 8px 0;
+        color: #4da3ff;
+      }
       pre {
         white-space: pre-wrap;
         word-break: break-word;
@@ -56,6 +62,8 @@
     </style>
   </head>
   <body>
+    <!-- В установленной PWA нет кнопки «Назад» браузера. -->
+    <a href="/">← Назад</a>
     <video id="preview" autoplay muted playsinline></video>
     <div class="row">
       <select id="facing">
